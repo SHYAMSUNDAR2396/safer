@@ -9,8 +9,6 @@ import hashlib
 import json
 import socket
 import struct
-import sys
-import time
 from collections import Counter
 from uuid import uuid4
 
@@ -75,7 +73,7 @@ def scan_states(db: Session, docs) -> dict:
     return states
 
 
-def scan_pending(db: Session, s3, settings, limit: int = 10) -> dict:
+def _due():
     done = exists().where(
         DocumentScan.document_id == Document.id,
         DocumentScan.object_version == Document.object_version,
@@ -86,63 +84,83 @@ def scan_pending(db: Session, s3, settings, limit: int = 10) -> dict:
         .where(DocumentScan.document_id == Document.id, DocumentScan.outcome == "error")
         .scalar_subquery()
     )
-    # ponytail: rows stay locked during fetch+scan; fine for one worker, use leases at scale.
-    due = db.scalars(
-        select(Document)
-        .where(Document.status == "quarantined", ~done, errors < MAX_ATTEMPTS)
-        .order_by(Document.created_at)
-        .limit(limit)
+    return select(Document).where(Document.status == "quarantined", ~done, errors < MAX_ATTEMPTS)
+
+
+def scan_document(db: Session, s3, settings, document_id) -> str | None:
+    """Scan one due document and commit its result; None if it needs no scan (idempotent)."""
+    doc = db.scalar(
+        _due()
+        .where(Document.id == document_id)
         .with_for_update(skip_locked=True)
-    ).all()
+        .execution_options(populate_existing=True)
+    )
+    if not doc:
+        db.rollback()
+        return None
+    outcome = _scan(db, s3, settings, doc)
+    db.commit()
+    return outcome
+
+
+def scan_pending(db: Session, s3, settings, limit: int = 10) -> dict:
+    """Batch form for tests and manual recovery; the job system scans one document at a time."""
+    due = db.scalars(_due().order_by(Document.created_at).limit(limit)).all()
     results = Counter()
     for doc in due:
-        sha256, signature, engine = None, "", ""
-        previous_errors = db.scalar(
-            select(func.count()).where(
-                DocumentScan.document_id == doc.id, DocumentScan.outcome == "error"
-            )
-        )
-        try:
-            obj = s3.get_object(
-                Bucket=settings.s3_bucket, Key=doc.object_key, VersionId=doc.object_version
-            )
-            data = obj["Body"].read(MAX_BYTES + 1)
-            sha256 = hashlib.sha256(data).hexdigest()
-            if sha256 != doc.sha256:
-                outcome = "mismatch"
-            else:
-                outcome, signature, engine = clamd_scan(settings, data)
-        except (BotoCoreError, ClientError, OSError):
-            outcome = "error"
-        db.add(
-            DocumentScan(
-                document_id=doc.id,
-                object_version=doc.object_version,
-                sha256=sha256,
-                outcome=outcome,
-                engine=engine,
-                signature=signature,
-            )
-        )
-        if outcome != "error" or previous_errors + 1 >= MAX_ATTEMPTS:
-            instrument = db.get(Instrument, doc.instrument_id)
-            db.add(
-                AuditEvent(
-                    institution_id=doc.institution_id,
-                    instrument_id=doc.instrument_id,
-                    actor_id=None,
-                    action="document.scanned" if outcome != "error" else "document.scan_failed",
-                    row_version=instrument.row_version,
-                    request_id=str(uuid4()),
-                    detail={"document_id": str(doc.id), "outcome": outcome, "engine": engine},
-                )
-            )
-        results[outcome] += 1
-    db.commit()
+        outcome = scan_document(db, s3, settings, doc.id)
+        if outcome:
+            results[outcome] += 1
     return dict(results)
 
 
+def _scan(db: Session, s3, settings, doc) -> str:
+    sha256, signature, engine = None, "", ""
+    previous_errors = db.scalar(
+        select(func.count()).where(
+            DocumentScan.document_id == doc.id, DocumentScan.outcome == "error"
+        )
+    )
+    try:
+        obj = s3.get_object(
+            Bucket=settings.s3_bucket, Key=doc.object_key, VersionId=doc.object_version
+        )
+        data = obj["Body"].read(MAX_BYTES + 1)
+        sha256 = hashlib.sha256(data).hexdigest()
+        if sha256 != doc.sha256:
+            outcome = "mismatch"
+        else:
+            outcome, signature, engine = clamd_scan(settings, data)
+    except (BotoCoreError, ClientError, OSError):
+        outcome = "error"
+    db.add(
+        DocumentScan(
+            document_id=doc.id,
+            object_version=doc.object_version,
+            sha256=sha256,
+            outcome=outcome,
+            engine=engine,
+            signature=signature,
+        )
+    )
+    if outcome != "error" or previous_errors + 1 >= MAX_ATTEMPTS:
+        instrument = db.get(Instrument, doc.instrument_id)
+        db.add(
+            AuditEvent(
+                institution_id=doc.institution_id,
+                instrument_id=doc.instrument_id,
+                actor_id=None,
+                action="document.scanned" if outcome != "error" else "document.scan_failed",
+                row_version=instrument.row_version,
+                request_id=str(uuid4()),
+                detail={"document_id": str(doc.id), "outcome": outcome, "engine": engine},
+            )
+        )
+    return outcome
+
+
 if __name__ == "__main__":
+    # Manual recovery only: scans everything due now. Normal scanning runs as jobs (safer.jobs).
     from sqlalchemy import create_engine
 
     from safer.config import Settings
@@ -150,13 +168,6 @@ if __name__ == "__main__":
 
     settings = Settings()
     engine = create_engine(settings.database_url.get_secret_value(), hide_parameters=True)
-    s3 = client(settings)
-    while True:
-        with Session(engine) as session:
-            results = scan_pending(session, s3, settings)
-        if results:
-            print(json.dumps(results), flush=True)
-        if "--once" in sys.argv:
-            break
-        if not results:
-            time.sleep(3)
+    with Session(engine) as session:
+        print(json.dumps(scan_pending(session, client(settings), settings, limit=1000)))
+    engine.dispose()

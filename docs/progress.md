@@ -67,3 +67,9 @@ Ruling: provider "interface" is a dict of functions with a documented contract, 
 Ruling: simulated evidence is real data in the evidence table (so comparison logic is exercised) but is distinguished by method and excluded from confirmation counts everywhere.
 
 M2 (SAF-008–012) is complete locally.
+
+## M3 / SAF-013 — 23 October 2026
+
+User asked to continue phase by phase without confirmation. Committed M1–M2 as a checkpoint (7183fcf) first.
+
+Ruling: database-as-ledger outbox with Celery as transport (backlog names Redis/Celery); Valkey 8.1 instead of Redis for licensing. One generic task runs any job id; per-kind payload schemas.

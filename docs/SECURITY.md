@@ -15,3 +15,5 @@ SAF-009: malware scanning runs in a credential-free ClamAV container with no int
 SAF-011: reviewers are scoped by explicit assignment, not by token claims or institution; every reviewer route resolves the case through the assignment join and returns 404 otherwise. Evidence methods exclude institution uploads by design. Observation text is rendered as plain text (React escaping, `pre-wrap`), never HTML.
 
 SAF-012: simulator answers are HMAC-signed with a key derived from the local session secret and verified with constant-time comparison; binding to request id, provider, FDR reference, case version and time window is checked before any evidence is written. The simulator is in-process and makes no network calls. It is labelled in UI, data (method, source) and API, and excluded from confirmation counts. Real bank integration remains unauthorised (SAF-036).
+
+SAF-013: the broker requires a generated password and binds to loopback; Celery accepts JSON only, messages carry only a job id, and job payloads are validated against a per-kind schema before any handler runs. Unknown kinds or invalid payloads end as dead without executing.

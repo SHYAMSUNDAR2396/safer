@@ -12,7 +12,7 @@ from fastapi import APIRouter, Depends, Query, Request, Response
 from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
-from safer import filecheck
+from safer import filecheck, jobs
 from safer.errors import Problem
 from safer.instruments import assigned_case, scoped_instrument
 from safer.models import Document, Obligation
@@ -229,6 +229,7 @@ def upload_document(
         db.commit()
         raise Problem(409, "already_submitted", "Submitted records cannot take new documents.")
     doc.status, doc.object_version = "quarantined", put["VersionId"]
+    jobs.enqueue(db, "scan_document", {"document_id": str(doc.id)}, f"scan_document:{doc.id}")
     audit(
         db,
         request,

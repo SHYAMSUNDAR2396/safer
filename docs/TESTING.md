@@ -57,3 +57,10 @@ CI workflow repeats build, lint, migrations, API tests and browser tests using e
 - Bug found by the stale test: a locked re-read returned the session's cached instrument, so version and status changes made after a commit went unseen. Fixed in `scoped_instrument` and bank acceptance. New regression test submits the record while an upload is being stored; it fails without the fix and passes with it.
 - Playwright: **6 passed**; the new scenario requests a simulated answer for a -MISMATCH reference, sees "Mismatch · simulated"/"Match · simulated", and the queue still shows 0 of 5 confirmed.
 - Alembic 007 round trip on an empty test database; Ruff, Prettier and TypeScript build pass.
+
+## Recorded results — SAF-013, 23 October 2026
+
+- API suite: **116 passed** (13 new): upload enqueues exactly one deduplicated scan job; enqueue rolls back with its transaction; relay publishes once, republishes after simulated broker loss, leaves jobs on publish failure; execution claims once and skips duplicate delivery; retries back off and end dead at the limit; not-yet-due jobs neither publish nor run; unknown kind / invalid / extra-field payloads end dead without executing; stalled jobs are reclaimed; attempt history is append-only; real Valkey + Celery worker delivers a scan end to end.
+- Found and fixed: a developer's Homebrew Redis already listened on 127.0.0.1:6379, so the broker moved to 56379. The host and Docker clocks differ slightly, so job times now use the database clock (this caused a requeued job to look not yet due).
+- Live checks on the demo stack: Celery's prefork pool crashed on macOS/Python 3.14; its three jobs were republished and succeeded once the worker ran with threads. With the queue stopped, the relay stayed up and the job stayed unpublished; after restart it was published and succeeded on attempt 1.
+- Playwright: **6 passed** with scanning now driven by jobs.

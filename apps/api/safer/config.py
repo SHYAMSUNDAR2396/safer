@@ -18,6 +18,8 @@ class Settings(BaseSettings):
     s3_secret_key: SecretStr
     clamd_host: str = "127.0.0.1"
     clamd_port: int = 3310
+    redis_password: SecretStr
+    redis_db: int = 0
 
     @model_validator(mode="after")
     def local_only(self):
@@ -27,6 +29,8 @@ class Settings(BaseSettings):
             parsed = urlparse(url)
             if parsed.hostname not in {"localhost", "127.0.0.1"} or parsed.scheme != "http":
                 raise ValueError("Local demo URLs must use loopback HTTP.")
+        if len(self.redis_password.get_secret_value()) < 32:
+            raise ValueError("Run scripts/bootstrap.py to generate the queue password.")
         if self.clamd_host not in {"localhost", "127.0.0.1"}:
             raise ValueError("The local scanner relay must be on loopback.")
         if len(self.session_secret.get_secret_value()) < 32:
@@ -34,3 +38,7 @@ class Settings(BaseSettings):
         if not self.database_url.get_secret_value().startswith("postgresql+psycopg://"):
             raise ValueError("PostgreSQL is required.")
         return self
+
+    @property
+    def broker_url(self) -> str:
+        return f"redis://:{self.redis_password.get_secret_value()}@127.0.0.1:56379/{self.redis_db}"

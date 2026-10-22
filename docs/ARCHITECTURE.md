@@ -43,3 +43,7 @@ Uploads go to a private versioned S3-compatible bucket; SeaweedFS 4.48 runs loca
 ## ADR-007: isolated malware scanning (SAF-009)
 
 The worker is the trusted orchestrator; clamd is the untrusted-content processor. The worker holds credentials and writes results; clamd holds none and sits on an internal network without egress. Docker cannot publish ports from internal networks, so a socat relay bridges loopback to clamd; the relay copies bytes only. Signature updates use a separate freshclam container sharing the signature volume (read-write, because the image's init changes ownership). The worker uses clamd's INSTREAM protocol directly, so no client library is added. Rows stay locked while a document is fetched and scanned: correct for one or several workers via SKIP LOCKED, but a lease/outbox (SAF-013) should replace it at scale.
+
+## ADR-008: outbox jobs with Celery delivery (SAF-013)
+
+PostgreSQL is the job ledger; Celery over Valkey only transports job ids. This keeps the outbox transactional and makes broker loss harmless: the relay republishes anything not claimed within a minute. Valkey (BSD licence) is used as the Redis-compatible broker and listens on 127.0.0.1:56379 to avoid clashing with a developer's own Redis on 6379. The worker uses Celery's thread pool. The relay is a 2-second loop rather than Celery beat, so scheduling stays in the database.

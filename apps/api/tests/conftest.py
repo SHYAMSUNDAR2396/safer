@@ -20,7 +20,7 @@ ENV = dotenv_values(ROOT / ".env")
 def settings():
     url = ENV["TEST_DATABASE_URL"]
     assert url.endswith("/safer_test"), "Never run destructive fixtures against application data"
-    return Settings(database_url=url, s3_bucket="safer-documents-test")
+    return Settings(database_url=url, s3_bucket="safer-documents-test", redis_db=15)
 
 
 @pytest.fixture
@@ -29,7 +29,7 @@ def db(settings):
     with engine.begin() as conn:
         conn.execute(
             text(
-                "TRUNCATE institutions, users, sessions, obligations, instruments, submissions, documents, document_scans, review_assignments, evidence_records, discrepancies, discrepancy_replies, audit_events CASCADE"
+                "TRUNCATE institutions, users, sessions, obligations, instruments, submissions, documents, document_scans, review_assignments, evidence_records, discrepancies, discrepancy_replies, bank_requests, bank_responses, jobs, job_attempts, audit_events CASCADE"
             )
         )
     with Session(engine, expire_on_commit=False) as session:

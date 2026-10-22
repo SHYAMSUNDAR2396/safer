@@ -23,6 +23,9 @@ def object_store():
                 "S3_ENDPOINT=http://127.0.0.1:8333\nS3_BUCKET=safer-documents\n"
                 f"S3_ACCESS_KEY={env['S3_ACCESS_KEY']}\nS3_SECRET_KEY={env['S3_SECRET_KEY']}\n"
             )
+    if "REDIS_PASSWORD" not in env:
+        with env_path.open("a") as f:
+            f.write(f"REDIS_PASSWORD={secrets.token_urlsafe(32)}\n")
     identity = {"accessKey": env["S3_ACCESS_KEY"], "secretKey": env["S3_SECRET_KEY"]}
     actions = ["Admin", "Read", "Write", "List", "Tagging"]
     config = {"identities": [{"name": "safer-api", "credentials": [identity], "actions": actions}]}

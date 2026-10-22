@@ -25,11 +25,14 @@ Start API in a terminal:
 uv run uvicorn safer.main:app --app-dir apps/api --host 127.0.0.1 --port 8000 --no-access-log
 ```
 
-Start the scan worker in another terminal (ClamAV needs about a minute after `compose up` before its first verdict):
+Start background jobs in two more terminals (ClamAV needs about a minute after `compose up` before its first verdict):
 
 ```sh
-PYTHONPATH=apps/api uv run python -m safer.scanning
+PYTHONPATH=apps/api uv run python -m safer.jobs          # relay: publishes due jobs, reclaims stalled ones
+PYTHONPATH=apps/api uv run celery -A safer.worker worker --pool=threads --concurrency=4
 ```
+
+The thread pool is deliberate: jobs are I/O-bound, and Celery's default process pool fails on macOS with Python 3.14. `python -m safer.scanning` remains as a one-shot manual recovery command.
 
 Start frontend in another terminal:
 
@@ -69,7 +72,7 @@ npx playwright install chromium
 npm run test:e2e
 ```
 
-API tests truncate **safer_test only**. Browser tests use the running local demo and leave clearly labeled synthetic records. API, scan worker, frontend and Compose services must be running for browser tests; API tests need the scanner relay on port 3310. Test passwords are read locally, never embedded in source. Frontend build is type-check plus compilation, not a production-readiness assertion.
+API tests truncate **safer_test only**. Browser tests use the running local demo and leave clearly labeled synthetic records. API, job relay, Celery worker, frontend and Compose services must be running for browser tests; API tests need the scanner relay on port 3310. Test passwords are read locally, never embedded in source. Frontend build is type-check plus compilation, not a production-readiness assertion.
 
 ## Stop / preserve data
 

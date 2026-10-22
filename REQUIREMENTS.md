@@ -1,4 +1,4 @@
-# Implemented scope: M1 / SAF-001–007, M2 / SAF-008–012
+# Implemented scope: M1 / SAF-001–007, M2 / SAF-008–012, M3 / SAF-013
 
 Source: ../docs/design/NIDHISETU-REQUIREMENTS-ARCHITECTURE-v2.md and ../docs/SAFER-IMPLEMENTATION-BACKLOG.md. Later branding is SAFER.
 
@@ -72,3 +72,17 @@ Reviewer assignment is seeded; managing assignments and delegation is SAF-017. I
 | Never counts as confirmation | Simulator evidence uses method `bank_simulator`; the queue's "confirmed" count excludes it and shows a separate simulated count |
 
 Scenario suffixes on the FDR reference: -MISMATCH, -NOTFOUND, -TIMEOUT, -TAMPER, -REPLAY. A real adapter (SAF-036) needs written authorisation, the bank's own authentication scheme and a hard network timeout.
+
+## SAF-013 — durable background jobs
+
+| Requirement | Delivered |
+|---|---|
+| Transactional outbox | `jobs.enqueue` inserts in the caller's transaction (rolls back with it); uploads enqueue their scan with the quarantine binding |
+| Durable attempts | `jobs` holds state (queued/running/succeeded/dead, attempts, lease, last error); `job_attempts` is append-only per attempt |
+| Redis/Celery delivery | Relay publishes job ids to Celery on Valkey 8.1; one task `safer.run_job`; JSON-only serialization, payload validated per kind, nothing unpickled |
+| Bounded retries | Exponential backoff 30 s → 15 min cap; dead after max attempts; handler crashes are recorded, never lost |
+| Deduplication | Unique dedup key per job; atomic claim makes duplicate or late deliveries no-ops |
+| Stalled-job reconciliation | Running jobs past their 5-minute lease are requeued or ended, with a `stalled` attempt record |
+| Broker-loss recovery | Unclaimed jobs are republished after 1 minute; queue holds no state (`--save ""`) |
+
+Delivery is at-least-once; handlers must be idempotent (the scan handler is). All job times use the database clock.

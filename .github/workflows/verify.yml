@@ -48,7 +48,8 @@ jobs:
       - name: Browser integration
         run: |
           uv run uvicorn safer.main:app --app-dir apps/api --host 127.0.0.1 --port 8000 --no-access-log > /tmp/safer-api.log 2>&1 &
-          PYTHONPATH=apps/api uv run python -m safer.scanning > /tmp/safer-scanner.log 2>&1 &
+          PYTHONPATH=apps/api uv run python -m safer.jobs > /tmp/safer-relay.log 2>&1 &
+          PYTHONPATH=apps/api uv run celery -A safer.worker worker --pool=threads --concurrency=4 > /tmp/safer-worker.log 2>&1 &
           (cd apps/web && npm run dev > /tmp/safer-web.log 2>&1) &
           for i in $(seq 1 30); do
             if curl -fsS http://localhost:5173/health/ready >/dev/null; then break; fi

@@ -253,6 +253,44 @@ class BankResponse(Base):
     )
 
 
+class Job(Base):
+    """Outbox row written with the business change; the broker only carries its id."""
+
+    __tablename__ = "jobs"
+    __table_args__ = (
+        CheckConstraint("status IN ('queued', 'running', 'succeeded', 'dead')"),
+        CheckConstraint("attempts >= 0 AND attempts <= max_attempts"),
+    )
+    id: Mapped[UUID] = mapped_column(primary_key=True, default=uuid4)
+    kind: Mapped[str] = mapped_column(String(50))
+    payload: Mapped[dict] = mapped_column(JSONB)
+    dedup_key: Mapped[str] = mapped_column(String(200), unique=True)
+    status: Mapped[str] = mapped_column(String(20), default="queued")
+    attempts: Mapped[int] = mapped_column(default=0)
+    max_attempts: Mapped[int] = mapped_column(default=3)
+    available_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now()
+    )
+    published_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    locked_until: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    last_error: Mapped[str] = mapped_column(String(300), default="")
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+
+
+class JobAttempt(Base):
+    __tablename__ = "job_attempts"
+    __table_args__ = (CheckConstraint("outcome IN ('succeeded', 'retry', 'dead', 'stalled')"),)
+    id: Mapped[UUID] = mapped_column(primary_key=True, default=uuid4)
+    job_id: Mapped[UUID] = mapped_column(ForeignKey("jobs.id"), index=True)
+    attempt: Mapped[int]
+    outcome: Mapped[str] = mapped_column(String(20))
+    error: Mapped[str] = mapped_column(String(300), default="")
+    started_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    finished_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now()
+    )
+
+
 class AuditEvent(Base):
     __tablename__ = "audit_events"
     id: Mapped[UUID] = mapped_column(primary_key=True, default=uuid4)

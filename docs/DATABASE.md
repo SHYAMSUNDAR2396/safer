@@ -32,3 +32,5 @@ Migration 006: role `reviewer`; `review_assignments` (reviewer, institution); ap
 Downgrading 006 deliberately fails while any user holds the reviewer role (the restored role constraint rejects them); remove or reassign those users first rather than deleting history.
 
 Migration 007: `bank_requests` (case, submission, row version, provider, requester) and `bank_responses` (one per request, outcome, detail, raw answer), both append-only; evidence method `bank_simulator`. Locked re-reads now use `populate_existing` because sessions keep objects across commits; without it a locked row could be read from the session cache. Downgrade fails while simulator evidence exists, by design.
+
+Migration 008: `jobs` (mutable job state; unique dedup key; partial index on due jobs) and append-only `job_attempts`; backfills scan jobs for quarantined documents without a final scan result.
