@@ -1,0 +1,61 @@
+name: Verify SAFER
+on: [push, pull_request]
+permissions:
+  contents: read
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+        with:
+          python-version: '3.14'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: apps/web/package-lock.json
+      - name: Configure and start isolated services
+        run: |
+          python3 scripts/bootstrap.py
+          uv sync --locked
+          ./scripts/compose.sh up -d
+          for i in $(seq 1 90); do
+            if ./scripts/compose.sh exec -T db pg_isready -U safer -d safer && curl -fsS http://localhost:8090/realms/safer/.well-known/openid-configuration >/dev/null && curl -s -o /dev/null http://127.0.0.1:8333/ && printf 'zPING\0' | nc -w 3 127.0.0.1 3310 | grep -q PONG; then break; fi
+            sleep 2
+          done
+          ./scripts/compose.sh exec -T db createdb -U safer safer_test
+          uv run alembic upgrade head
+          uv run alembic -x test=true upgrade head
+          PYTHONPATH=apps/api uv run python -m safer.seed
+      - name: Scanner isolation
+        run: |
+          # The parser container must reach neither the internet nor storage/database.
+          ./scripts/compose.sh exec -T scanner sh -c '! nc -z -w 3 1.1.1.1 443 && ! nc -z -w 3 objects 8333 && ! nc -z -w 3 db 5432'
+      - name: Backend checks
+        run: |
+          uv run ruff check apps/api scripts
+          uv run ruff format --check apps/api scripts
+          uv run pytest -q
+      - name: Frontend checks
+        working-directory: apps/web
+        run: |
+          npm ci
+          npm run build
+          npm run format:check
+          npx playwright install --with-deps chromium
+      - name: Browser integration
+        run: |
+          uv run uvicorn safer.main:app --app-dir apps/api --host 127.0.0.1 --port 8000 --no-access-log > /tmp/safer-api.log 2>&1 &
+          PYTHONPATH=apps/api uv run python -m safer.scanning > /tmp/safer-scanner.log 2>&1 &
+          (cd apps/web && npm run dev > /tmp/safer-web.log 2>&1) &
+          for i in $(seq 1 30); do
+            if curl -fsS http://localhost:5173/health/ready >/dev/null; then break; fi
+            sleep 1
+          done
+          cd apps/web
+          npm run test:e2e
+      - name: Stop services
+        if: always()
+        run: ./scripts/compose.sh stop

@@ -1,0 +1,59 @@
+name: safer
+services:
+  db:
+    image: postgres:16.15-alpine
+    environment:
+      POSTGRES_DB: safer
+      POSTGRES_USER: safer
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?Run scripts/bootstrap.py}
+    ports: ["127.0.0.1:55432:5432"]
+    volumes: ["pgdata:/var/lib/postgresql/data"]
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U safer -d safer"]
+      interval: 3s
+      timeout: 3s
+      retries: 30
+  identity:
+    image: quay.io/keycloak/keycloak:26.4.7
+    command: ["start-dev", "--import-realm"]
+    environment:
+      KC_BOOTSTRAP_ADMIN_USERNAME: local-admin
+      KC_BOOTSTRAP_ADMIN_PASSWORD: ${KEYCLOAK_ADMIN_PASSWORD:?Run scripts/bootstrap.py}
+      KC_HOSTNAME: http://localhost:8090
+    ports: ["127.0.0.1:8090:8080"]
+    volumes:
+      - ./.local/realm.json:/opt/keycloak/data/import/realm.json:ro
+      - identitydata:/opt/keycloak/data
+  objects:
+    # Private S3-compatible store; versioning is enabled per bucket by the seed step.
+    image: chrislusf/seaweedfs:4.48
+    command: ["server", "-s3", "-s3.config=/etc/seaweedfs/s3.json", "-dir=/data"]
+    ports: ["127.0.0.1:8333:8333"]
+    volumes:
+      - ./.local/s3.json:/etc/seaweedfs/s3.json:ro
+      - objectdata:/data
+  signatures:
+    # Only this ClamAV container reaches the internet; it never receives documents.
+    image: clamav/clamav-debian:1.5.3
+    environment: {CLAMAV_NO_CLAMD: "true"}
+    volumes: ["clamdb:/var/lib/clamav"]
+  scanner:
+    # Parses untrusted bytes: no credentials, no storage/database access, no internet.
+    image: clamav/clamav-debian:1.5.3
+    environment: {CLAMAV_NO_FRESHCLAMD: "true"}
+    volumes: ["clamdb:/var/lib/clamav"]
+    networks: [scan]
+  scan-relay:
+    # Internal networks cannot publish ports; this relay forwards loopback TCP only.
+    image: alpine/socat:1.8.0.3
+    command: ["tcp-listen:3310,fork,reuseaddr", "tcp-connect:scanner:3310"]
+    ports: ["127.0.0.1:3310:3310"]
+    networks: [scan, default]
+networks:
+  scan:
+    internal: true
+volumes:
+  clamdb:
+  objectdata:
+  pgdata:
+  identitydata:
