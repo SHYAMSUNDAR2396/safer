@@ -29,7 +29,14 @@ def db(settings):
     with engine.begin() as conn:
         conn.execute(
             text(
-                "TRUNCATE institutions, users, sessions, obligations, instruments, submissions, documents, document_scans, review_assignments, evidence_records, discrepancies, discrepancy_replies, bank_requests, bank_responses, jobs, job_attempts, audit_events CASCADE"
+                "TRUNCATE institutions, users, sessions, obligations, instruments, submissions, documents, document_scans, review_assignments, evidence_records, discrepancies, discrepancy_replies, bank_requests, bank_responses, jobs, job_attempts, reminders, reminder_schedules, audit_events CASCADE"
+            )
+        )
+        # The migration's default schedule, restored because tests may add versions.
+        conn.execute(
+            text(
+                "INSERT INTO reminder_schedules VALUES (1, '{90,60,30,7}', 30, 7,"
+                " '2026-01-01T00:00:00+05:30', 'Illustrative demo schedule')"
             )
         )
     with Session(engine, expire_on_commit=False) as session:

@@ -23,6 +23,7 @@ import type {
   ReviewItem,
 } from "./types";
 import {
+  DeadlinesPanel,
   Dialog,
   Notice,
   Recovery,
@@ -643,6 +644,7 @@ function CaseView({
               <Timeline items={data.audit} />
             </section>
           </div>
+          <DeadlinesPanel data={data.deadlines} />
           <BankSimulator data={data} me={me} onChange={load} />
           <section className="panel documents">
             <div className="section-title">
@@ -850,6 +852,12 @@ export function ReviewWorkspace({ me }: { me: Me }) {
                       {q.open_discrepancies
                         ? `${q.open_discrepancies} open`
                         : "None open"}
+                      {q.escalated && (
+                        <span className="badge cmp-mismatch escalated">
+                          <span />
+                          Escalated
+                        </span>
+                      )}
                     </td>
                     <td>
                       <button

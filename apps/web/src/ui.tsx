@@ -1,8 +1,9 @@
 import { useEffect, useRef, type ReactNode } from "react";
-import { Check, X } from "lucide-react";
-import { api } from "./api";
+import { BellRing, CalendarClock, Check, X } from "lucide-react";
+import { api, day } from "./api";
 import type {
   AuditEvent,
+  Deadlines,
   DocumentFile,
   DocumentKind,
   Instrument,
@@ -23,6 +24,9 @@ export const events: Record<string, string> = {
   "review.discrepancy_resolved": "Observation resolved",
   "review.bank_requested": "Simulated bank confirmation requested",
   "review.bank_answered": "Simulated bank answer recorded",
+  "deadline.maturity_reminder": "Maturity reminder generated",
+  "deadline.action_due": "Renewal action due",
+  "deadline.escalation": "Escalated to reviewer",
 };
 export const documentStatus: Record<DocumentFile["status"], string> = {
   pending: "Uploading",
@@ -154,5 +158,92 @@ export function Timeline({ items }: { items: AuditEvent[] }) {
         </li>
       ))}
     </ol>
+  );
+}
+
+const reminderLabels: Record<Deadlines["reminders"][number]["kind"], string> = {
+  maturity_reminder: "Maturity reminder",
+  action_due: "Renewal action due",
+  escalation: "Escalated to reviewer",
+};
+
+function stepLabel(step: string) {
+  if (step.startsWith("reminder:")) return `${step.slice(9)}-day notice`;
+  return step === "action_due" ? "Action due" : "Escalation";
+}
+
+export function DeadlinesPanel({ data }: { data: Deadlines }) {
+  return (
+    <section className="panel documents">
+      <div className="section-title">
+        <CalendarClock size={19} />
+        <h2>Deadlines and reminders</h2>
+      </div>
+      <p className="muted small">
+        Maturity, the action date and the obligation's own cover are tracked
+        separately.
+        {data.schedule_version &&
+          ` Reminder schedule v${data.schedule_version} · illustrative policy.`}
+      </p>
+      <dl className="facts deadline-dates">
+        <div>
+          <dt>FDR maturity</dt>
+          <dd>{day(data.maturity_date)}</dd>
+        </div>
+        <div>
+          <dt>Renewal action due</dt>
+          <dd>
+            {data.action_due_date
+              ? day(data.action_due_date)
+              : "Not needed · cover ends before maturity"}
+          </dd>
+        </div>
+        <div>
+          <dt>Obligation cover required until</dt>
+          <dd>
+            {data.obligation_required_until
+              ? day(data.obligation_required_until)
+              : "Until formally released"}
+          </dd>
+        </div>
+      </dl>
+      {data.reminders.length > 0 && (
+        <ul className="evidence-log">
+          {data.reminders.map((r) => (
+            <li key={r.step} className={`reminder ${r.kind}`}>
+              <strong>
+                <BellRing size={13} /> {reminderLabels[r.kind]}
+                {r.late ? " · generated late" : ""}
+              </strong>
+              <span>{r.message}</span>
+              {r.kind === "escalation" && (
+                <span>
+                  Owner:{" "}
+                  {data.escalation_owners.length
+                    ? data.escalation_owners.join(", ")
+                    : "no reviewer assigned"}
+                </span>
+              )}
+              <small>
+                Due {new Date(r.due_at).toLocaleString("en-IN")} · generated{" "}
+                {new Date(r.generated_at).toLocaleString("en-IN")}
+              </small>
+            </li>
+          ))}
+        </ul>
+      )}
+      {data.upcoming.length > 0 && (
+        <p className="doc-empty">
+          Next:{" "}
+          {data.upcoming
+            .slice(0, 3)
+            .map(
+              (u) =>
+                `${stepLabel(u.step)} on ${new Date(u.due_at).toLocaleDateString("en-IN")}`,
+            )
+            .join(" · ")}
+        </p>
+      )}
+    </section>
   );
 }

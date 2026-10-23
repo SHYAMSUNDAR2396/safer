@@ -64,3 +64,11 @@ CI workflow repeats build, lint, migrations, API tests and browser tests using e
 - Found and fixed: a developer's Homebrew Redis already listened on 127.0.0.1:6379, so the broker moved to 56379. The host and Docker clocks differ slightly, so job times now use the database clock (this caused a requeued job to look not yet due).
 - Live checks on the demo stack: Celery's prefork pool crashed on macOS/Python 3.14; its three jobs were republished and succeeded once the worker ran with threads. With the queue stopped, the relay stayed up and the job stayed unpublished; after restart it was published and succeeded on attempt 1.
 - Playwright: **6 passed** with scanning now driven by jobs.
+
+## Recorded results — SAF-014, 23 October 2026
+
+- API suite: **126 passed** (10 new): drafts get no reminders; a reminder fires at its due time and not one minute before; missed runs catch up four steps with no duplicates on rerun; 14 minutes late is on target, 16 is flagged; pre-submission notices skipped while overdue action and escalation fire; escalation owned by the assigned reviewer, visible as unowned after unassignment; a new schedule version applies forward and keeps history; no renewal steps when cover ends before maturity; the three dates stay separate in institution and reviewer views; reminders and schedules immutable.
+- Corrected two of my own expectations: an FDR submitted 10 days before maturity is 13 days past its escalation point, so escalating at once is right.
+- Audit trail now names system actors by source ("SAFER scheduler", "SAFER malware scanner").
+- Playwright: **7 passed**; the new scenario submits an FDR maturing in 10 days, waits for the real relay sweep, sees the separate dates, overdue action and escalation with its owner, and the reviewer queue's Escalated flag.
+- Environment: Colima had stopped (machine restart); restarted it and the Compose stack with volumes intact.

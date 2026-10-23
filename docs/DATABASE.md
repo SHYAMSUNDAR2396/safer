@@ -34,3 +34,5 @@ Downgrading 006 deliberately fails while any user holds the reviewer role (the r
 Migration 007: `bank_requests` (case, submission, row version, provider, requester) and `bank_responses` (one per request, outcome, detail, raw answer), both append-only; evidence method `bank_simulator`. Locked re-reads now use `populate_existing` because sessions keep objects across commits; without it a locked row could be read from the session cache. Downgrade fails while simulator evidence exists, by design.
 
 Migration 008: `jobs` (mutable job state; unique dedup key; partial index on due jobs) and append-only `job_attempts`; backfills scan jobs for quarantined documents without a final scan result.
+
+Migration 009: `obligations.required_until`; append-only `reminder_schedules` (version 1 seeded) and `reminders` (unique per instrument and step, schedule version, due/generated times, late flag, message); index on `instruments.maturity_date`.

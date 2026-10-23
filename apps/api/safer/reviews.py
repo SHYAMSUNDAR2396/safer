@@ -4,6 +4,7 @@ from uuid import UUID
 from fastapi import APIRouter, Request
 from sqlalchemy import select
 
+from safer.deadlines import deadline_view
 from safer.documents import document_view, instrument_documents
 from safer.errors import Problem
 from safer.instruments import assigned_case, audit_items, scoped_instrument
@@ -15,6 +16,7 @@ from safer.models import (
     EvidenceRecord,
     Institution,
     Instrument,
+    Reminder,
     ReviewAssignment,
     Submission,
     User,
@@ -169,6 +171,13 @@ def queue(user: Reviewer, db: DB):
     ).all()
     ids = [item.id for item, _, _ in rows]
     records, threads = case_evidence(db, ids), discrepancy_views(db, ids)
+    escalated = set(
+        db.scalars(
+            select(Reminder.instrument_id).where(
+                Reminder.instrument_id.in_(ids), Reminder.kind == "escalation"
+            )
+        )
+    )
     items = []
     for item, inst, sub in rows:
         rows_ = comparison(sub.snapshot, [r for r in records if r.instrument_id == item.id])
@@ -186,6 +195,7 @@ def queue(user: Reviewer, db: DB):
                 "mismatched_fields": statuses.count("mismatch"),
                 # Simulator answers are shown apart and never count as confirmation.
                 "simulated_fields": sum(row["simulated"] for row in rows_),
+                "escalated": item.id in escalated,
                 "open_discrepancies": sum(
                     t["status"] == "open" for t in threads if t["instrument_id"] == str(item.id)
                 ),
@@ -212,6 +222,7 @@ def case(id: UUID, user: Reviewer, db: DB):
         "submitted_documents": sub.snapshot.get("documents", []),
         "discrepancies": discrepancy_views(db, [id]),
         "bank_requests": bank_views(db, id),
+        "deadlines": deadline_view(db, item),
         "audit": audit_items(db, item),
     }
 

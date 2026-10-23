@@ -1427,3 +1427,25 @@ textarea {
   color: #7a6434;
   font-size: 11px;
 }
+
+.deadline-dates {
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  margin: 18px 0;
+}
+@media (max-width: 700px) {
+  .deadline-dates {
+    grid-template-columns: 1fr;
+  }
+}
+.reminder.escalation {
+  border-left: 3px solid #c56b61;
+}
+.reminder.action_due {
+  border-left: 3px solid #b9852f;
+}
+.reminder strong svg {
+  vertical-align: -2px;
+}
+.badge.escalated {
+  margin-left: 8px;
+}

@@ -258,6 +258,9 @@ def timeline(id: UUID, user: Actor, db: DB):
     return {"items": audit_items(db, item)}
 
 
+SYSTEM_ACTORS = {"document": "SAFER malware scanner", "deadline": "SAFER scheduler"}
+
+
 def audit_items(db, item) -> list[dict]:
     rows = db.execute(
         select(AuditEvent, User.display_name)
@@ -271,7 +274,7 @@ def audit_items(db, item) -> list[dict]:
         {
             "id": str(e.id),
             "action": e.action,
-            "actor": name or "SAFER malware scanner",
+            "actor": name or SYSTEM_ACTORS.get(e.action.split(".")[0], "SAFER system"),
             "row_version": e.row_version,
             "created_at": e.created_at.isoformat(),
             "request_id": e.request_id,

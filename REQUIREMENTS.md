@@ -1,4 +1,4 @@
-# Implemented scope: M1 / SAF-001–007, M2 / SAF-008–012, M3 / SAF-013
+# Implemented scope: M1 / SAF-001–007, M2 / SAF-008–012, M3 / SAF-013–014
 
 Source: ../docs/design/NIDHISETU-REQUIREMENTS-ARCHITECTURE-v2.md and ../docs/SAFER-IMPLEMENTATION-BACKLOG.md. Later branding is SAFER.
 
@@ -86,3 +86,15 @@ Scenario suffixes on the FDR reference: -MISMATCH, -NOTFOUND, -TIMEOUT, -TAMPER,
 | Broker-loss recovery | Unclaimed jobs are republished after 1 minute; queue holds no state (`--save ""`) |
 
 Delivery is at-least-once; handlers must be idempotent (the scan handler is). All job times use the database clock.
+
+## SAF-014 — maturity monitoring and reminders (FR04)
+
+| Requirement | Delivered |
+|---|---|
+| Separate dates | FDR maturity, renewal action date (maturity − lead days) and obligation `required_until` (null = until released) are distinct; no action or escalation when cover ends before maturity |
+| Versioned schedule | Immutable `reminder_schedules` (offsets, action lead, escalation delay, effective from); the latest version in effect applies forward; each reminder records the version it was generated under |
+| Due work within 15 minutes | The relay sweeps every 60 s; each reminder records its due time, generation time and a `late` flag if generated more than 15 minutes after due |
+| Test clock and catch-up | `deadlines.sweep(db, now)` takes an injectable clock; a sweep generates everything due and unrecorded, so missed runs catch up; unique (instrument, step) prevents duplicates |
+| Escalation ownership | Escalations are owned by the institution's assigned reviewers, listed on the record; an unowned escalation shows "no reviewer assigned"; the queue flags escalated cases |
+
+Notices whose time passed before submission are skipped; overdue actions and escalations are not. Escalation currently fires whenever the action date has passed because renewal/replacement linking arrives in SAF-016. Delivery of notifications (in-app, email) is SAF-015. The default schedule (90/60/30/7 days, 30-day lead, 7-day escalation) is illustrative and needs policy-owner validation.

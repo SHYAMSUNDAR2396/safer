@@ -24,3 +24,5 @@ Document bytes live in the `objectdata` volume, not the database dump. Back up b
 Run the scan worker (`PYTHONPATH=apps/api uv run python -m safer.scanning`, or `--once`) alongside the API. If the worker or ClamAV stops, uploads remain quarantined and show scanning; nothing becomes downloadable. Watch `.local/scanner.log` locally; production needs queue-age and scan-failure alerts (SAF-013/028). `clamdb` holds only public signatures and can be recreated.
 
 Background jobs: run the relay (`python -m safer.jobs`) and a Celery worker (`celery -A safer.worker worker --pool=threads`). Inspect `jobs` for `status = 'dead'` or old `queued` rows; a dead job keeps its last error and its attempts in `job_attempts`. Requeue deliberately with `UPDATE jobs SET status='queued', attempts=0, available_at=now(), published_at=NULL WHERE id=...` after fixing the cause. Losing the Valkey container loses no jobs.
+
+The relay also runs the reminder sweep every minute. To change the schedule, insert a new `reminder_schedules` version with a future `effective_from`; never edit an existing version. A management screen and approval flow belong to SAF-018.

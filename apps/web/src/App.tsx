@@ -32,6 +32,7 @@ import type {
   Me,
   Obligation,
   Register,
+  Deadlines,
   Requirement,
 } from "./types";
 import "./styles.css";
@@ -48,6 +49,7 @@ import {
   refreshedSession,
   Recovery,
   Badge,
+  DeadlinesPanel,
   Dialog,
   Timeline,
 } from "./ui";
@@ -435,6 +437,12 @@ function Details({
   const [busy, setBusy] = useState(false);
   const [uploads, setUploads] = useState(0);
   const [missing, setMissing] = useState<string[] | null>(null);
+  const [deadlines, setDeadlines] = useState<Deadlines | null>(null);
+  useEffect(() => {
+    api<Deadlines>(`/api/v1/instruments/${item.id}/deadlines`)
+      .then(setDeadlines)
+      .catch(() => setDeadlines(null));
+  }, [item.id, item.row_version]);
   const key = useRef(crypto.randomUUID());
   useEffect(() => {
     let active = true;
@@ -579,6 +587,7 @@ function Details({
         onUploaded={() => setUploads((n) => n + 1)}
         onRequirements={setMissing}
       />
+      {deadlines && <DeadlinesPanel data={deadlines} />}
       {item.status === "submitted" && <Observations id={item.id} me={me} />}
       {confirm && (
         <Dialog
@@ -808,7 +817,7 @@ export default function App() {
           </p>
         </div>
         <div className="sidebar-footer">
-          SAFER <span>v0.6 · Bank simulator</span>
+          SAFER <span>v0.7 · Maturity monitoring</span>
         </div>
       </aside>
       <div className="workspace">

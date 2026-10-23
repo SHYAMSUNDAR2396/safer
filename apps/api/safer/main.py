@@ -15,6 +15,7 @@ from starlette.middleware.sessions import SessionMiddleware
 from safer.auth import router as auth_router
 from safer.bank import router as bank_router
 from safer.config import Settings
+from safer.deadlines import router as deadlines_router
 from safer.documents import router as documents_router
 from safer.errors import Problem
 from safer.instruments import router as instruments_router
@@ -141,6 +142,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     app.include_router(documents_router)
     app.include_router(reviews_router)
     app.include_router(bank_router)
+    app.include_router(deadlines_router)
     return app
 
 

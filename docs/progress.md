@@ -73,3 +73,9 @@ M2 (SAF-008–012) is complete locally.
 User asked to continue phase by phase without confirmation. Committed M1–M2 as a checkpoint (7183fcf) first.
 
 Ruling: database-as-ledger outbox with Celery as transport (backlog names Redis/Celery); Valkey 8.1 instead of Redis for licensing. One generic task runs any job id; per-kind payload schemas.
+
+## M3 / SAF-014 — 23 October 2026
+
+Ruling: the sweep runs inside the relay loop rather than as Celery beat, keeping one scheduler and the database clock. Reminders are records (the "due work"); delivering them as notifications is SAF-015.
+
+Ruling: due time is 09:30 IST on the computed day.

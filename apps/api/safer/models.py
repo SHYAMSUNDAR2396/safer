@@ -8,6 +8,7 @@ from sqlalchemy import (
     DateTime,
     ForeignKey,
     ForeignKeyConstraint,
+    Integer,
     Numeric,
     String,
     UniqueConstraint,
@@ -69,6 +70,8 @@ class Obligation(Base):
     required_documents: Mapped[list[str]] = mapped_column(
         ARRAY(String(30)), server_default="{fdr_certificate}"
     )
+    # The obligation's own coverage end; None means cover is required until released.
+    required_until: Mapped[date | None]
 
 
 class Instrument(Base):
@@ -289,6 +292,43 @@ class JobAttempt(Base):
     finished_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now()
     )
+
+
+class ReminderSchedule(Base):
+    """Immutable, versioned reminder policy; the latest version in effect applies going forward."""
+
+    __tablename__ = "reminder_schedules"
+    __table_args__ = (
+        CheckConstraint("cardinality(offsets_days) > 0 AND 0 < ALL(offsets_days)"),
+        CheckConstraint("action_lead_days > 0 AND escalate_after_days > 0"),
+    )
+    version: Mapped[int] = mapped_column(primary_key=True, autoincrement=False)
+    offsets_days: Mapped[list[int]] = mapped_column(ARRAY(Integer))
+    action_lead_days: Mapped[int]
+    escalate_after_days: Mapped[int]
+    effective_from: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+    note: Mapped[str] = mapped_column(String(200), default="")
+
+
+class Reminder(Base):
+    __tablename__ = "reminders"
+    __table_args__ = (
+        case_fk(),
+        UniqueConstraint("instrument_id", "step"),
+        CheckConstraint("kind IN ('maturity_reminder', 'action_due', 'escalation')"),
+        CheckConstraint("owner_role IN ('institution', 'reviewer')"),
+    )
+    id: Mapped[UUID] = mapped_column(primary_key=True, default=uuid4)
+    instrument_id: Mapped[UUID] = mapped_column(index=True)
+    institution_id: Mapped[UUID]
+    step: Mapped[str] = mapped_column(String(30))
+    kind: Mapped[str] = mapped_column(String(30))
+    owner_role: Mapped[str] = mapped_column(String(20))
+    schedule_version: Mapped[int] = mapped_column(ForeignKey("reminder_schedules.version"))
+    due_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+    generated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+    late: Mapped[bool]
+    message: Mapped[str] = mapped_column(String(300))
 
 
 class AuditEvent(Base):

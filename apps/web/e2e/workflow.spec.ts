@@ -318,3 +318,57 @@ test("simulated bank answer is labelled and compared without counting as confirm
     "0 of 5 confirmed",
   );
 });
+
+test("overdue renewal shows separate dates and escalates to the assigned reviewer", async ({
+  page,
+}) => {
+  test.setTimeout(150000); // the scheduler sweeps once a minute
+  const iso = (days: number) =>
+    new Date(Date.now() + days * 86400000).toISOString().slice(0, 10);
+  const ref = `DUE-${Date.now()}`;
+  await login(page, "alpha");
+  await page.getByRole("button", { name: "New FDR" }).click();
+  await page.getByLabel("Bank name").fill("Synthetic Deadline Bank");
+  await page.getByLabel("FDR reference").fill(ref);
+  await page.getByLabel("Principal amount (INR)").fill("90000.00");
+  await page.getByLabel("Issue date").fill(iso(-200));
+  await page.getByLabel("Maturity date").fill(iso(10));
+  await page.getByRole("button", { name: "Save draft" }).click();
+  await expect(
+    page.getByRole("heading", { name: "Deadlines and reminders" }),
+  ).toBeVisible();
+  await expect(page.getByText("Until formally released")).toBeVisible();
+  await page.getByLabel("Upload document").setInputFiles({
+    name: "deadline-fdr.pdf",
+    mimeType: "application/pdf",
+    buffer: minimalPdf(),
+  });
+  await page.getByRole("button", { name: "Submit metadata" }).click();
+  await page.getByRole("button", { name: "Confirm submission" }).click();
+  await expect(
+    page.getByText("Metadata submitted", { exact: true }),
+  ).toBeVisible();
+  await expect(async () => {
+    await page.reload();
+    await page.getByRole("button", { name: ref, exact: true }).click();
+    await expect(
+      page.locator(".reminder.escalation").getByText("Escalated to reviewer"),
+    ).toBeVisible({ timeout: 2000 });
+  }).toPass({ timeout: 100000, intervals: [5000] });
+  await expect(page.locator(".reminder.action_due")).toContainText(
+    "Renew or replace this FDR",
+  );
+  await page.screenshot({
+    path: "test-results/deadlines.png",
+    fullPage: true,
+  });
+  await signOut(page);
+  await login(page, "reviewer");
+  await expect(page.getByRole("row", { name: new RegExp(ref) })).toContainText(
+    "Escalated",
+  );
+  await page.getByRole("button", { name: ref, exact: true }).click();
+  await expect(page.locator(".reminder.escalation")).toContainText(
+    "Owner: Regulation Bureau reviewer",
+  );
+});

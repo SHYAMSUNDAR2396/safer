@@ -209,10 +209,19 @@ if __name__ == "__main__":
 
     settings = Settings()
     engine = create_engine(settings.database_url.get_secret_value(), hide_parameters=True)
+    from safer import deadlines
+
     publish = celery_publish(configure(settings))
+    swept = 0.0
     while True:
         with Session(engine, expire_on_commit=False) as session:
             sent, stalled = publish_due(session, publish), reconcile_stalled(session)
-        if sent or stalled:
-            print(json.dumps({"published": sent, "stalled": stalled}), flush=True)
+            reminders = 0
+            if time.monotonic() - swept >= 60:  # well inside the 15-minute due-work target
+                reminders, swept = deadlines.sweep(session), time.monotonic()
+        if sent or stalled or reminders:
+            print(
+                json.dumps({"published": sent, "stalled": stalled, "reminders": reminders}),
+                flush=True,
+            )
         time.sleep(2)

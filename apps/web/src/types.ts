@@ -85,6 +85,7 @@ export type ReviewItem = {
   confirmed_fields: number;
   mismatched_fields: number;
   simulated_fields: number;
+  escalated: boolean;
   open_discrepancies: number;
 };
 export type Comparison = {
@@ -148,5 +149,24 @@ export type ReviewCase = {
   submitted_documents: { id: string }[];
   discrepancies: Discrepancy[];
   bank_requests: BankExchange[];
+  deadlines: Deadlines;
   audit: AuditEvent[];
+};
+export type Deadlines = {
+  maturity_date: string;
+  action_due_date: string | null;
+  obligation_required_until: string | null;
+  renewal_required: boolean;
+  schedule_version: number | null;
+  reminders: {
+    step: string;
+    kind: "maturity_reminder" | "action_due" | "escalation";
+    owner_role: "institution" | "reviewer";
+    message: string;
+    due_at: string;
+    generated_at: string;
+    late: boolean;
+  }[];
+  upcoming: { step: string; kind: string; due_at: string }[];
+  escalation_owners: string[];
 };
