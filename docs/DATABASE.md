@@ -36,3 +36,5 @@ Migration 007: `bank_requests` (case, submission, row version, provider, request
 Migration 008: `jobs` (mutable job state; unique dedup key; partial index on due jobs) and append-only `job_attempts`; backfills scan jobs for quarantined documents without a final scan result.
 
 Migration 009: `obligations.required_until`; append-only `reminder_schedules` (version 1 seeded) and `reminders` (unique per instrument and step, schedule version, due/generated times, late flag, message); index on `instruments.maturity_date`.
+
+Migration 010: `users.email`; `notifications` (one row per reminder, recipient and channel, unique), content frozen by trigger while read and delivery state may change.

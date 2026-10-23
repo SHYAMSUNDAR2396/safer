@@ -37,13 +37,19 @@ def populate(db: Session, issuer: str):
     ]:
         subject = f"00000000-0000-4000-8000-{suffix:012d}"
         id = UUID(subject)
-        if not db.get(User, id):
+        existing = db.get(User, id)
+        if existing and not existing.email:  # additive: earlier seeds had no addresses
+            existing.email = (
+                f"{('alpha', 'beta', 'auditor', 'reviewer')[suffix - 1]}@example.invalid"
+            )
+        if not existing:
             db.add(
                 User(
                     id=id,
                     issuer=issuer,
                     subject=subject,
                     display_name=name,
+                    email=f"{('alpha', 'beta', 'auditor', 'reviewer')[suffix - 1]}@example.invalid",
                     institution_id=UUID(int=institution),
                     role=role,
                 )

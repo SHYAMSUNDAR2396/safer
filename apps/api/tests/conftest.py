@@ -29,7 +29,7 @@ def db(settings):
     with engine.begin() as conn:
         conn.execute(
             text(
-                "TRUNCATE institutions, users, sessions, obligations, instruments, submissions, documents, document_scans, review_assignments, evidence_records, discrepancies, discrepancy_replies, bank_requests, bank_responses, jobs, job_attempts, reminders, reminder_schedules, audit_events CASCADE"
+                "TRUNCATE institutions, users, sessions, obligations, instruments, submissions, documents, document_scans, review_assignments, evidence_records, discrepancies, discrepancy_replies, bank_requests, bank_responses, jobs, job_attempts, reminders, reminder_schedules, notifications, audit_events CASCADE"
             )
         )
         # The migration's default schedule, restored because tests may add versions.
@@ -72,6 +72,7 @@ def actors(db, settings):
             issuer=settings.oidc_issuer,
             subject=name,
             display_name=name,
+            email=f"{name}@example.invalid",
             institution_id=inst.id,
             role=role,
         )

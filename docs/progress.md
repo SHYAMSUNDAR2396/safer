@@ -79,3 +79,7 @@ Ruling: database-as-ledger outbox with Celery as transport (backlog names Redis/
 Ruling: the sweep runs inside the relay loop rather than as Celery beat, keeping one scheduler and the database clock. Reminders are records (the "due work"); delivering them as notifications is SAF-015.
 
 Ruling: due time is 09:30 IST on the computed day.
+
+## M3 / SAF-015 — 23 October 2026
+
+Ruling: Mailpit v1.31.3 captures email locally. Handlers now receive `final` on their last attempt so a permanently undeliverable email ends as visibly failed rather than stuck pending.

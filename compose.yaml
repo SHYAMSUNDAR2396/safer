@@ -37,6 +37,10 @@ services:
     image: valkey/valkey:8.1.10-alpine
     command: ["valkey-server", "--requirepass", "${REDIS_PASSWORD:?Run scripts/bootstrap.py}", "--save", ""]
     ports: ["127.0.0.1:56379:6379"]  # a non-default port avoids clashing with a local Redis
+  mail:
+    # Local email capture only: messages never leave this machine. Inbox UI on :58025.
+    image: axllent/mailpit:v1.31.3
+    ports: ["127.0.0.1:51025:1025", "127.0.0.1:58025:8025"]
   signatures:
     # Only this ClamAV container reaches the internet; it never receives documents.
     image: clamav/clamav-debian:1.5.3

@@ -1,3 +1,4 @@
+from typing import Literal
 from urllib.parse import urlparse
 
 from pydantic import SecretStr, model_validator
@@ -19,6 +20,11 @@ class Settings(BaseSettings):
     clamd_host: str = "127.0.0.1"
     clamd_port: int = 3310
     redis_password: SecretStr
+    # Only local capture exists; a real provider needs separate authorisation and code review.
+    email_mode: Literal["capture"] = "capture"
+    smtp_host: str = "127.0.0.1"
+    smtp_port: int = 51025
+    mail_from: str = "SAFER demo <no-reply@safer.invalid>"
     redis_db: int = 0
 
     @model_validator(mode="after")
@@ -31,6 +37,8 @@ class Settings(BaseSettings):
                 raise ValueError("Local demo URLs must use loopback HTTP.")
         if len(self.redis_password.get_secret_value()) < 32:
             raise ValueError("Run scripts/bootstrap.py to generate the queue password.")
+        if self.smtp_host not in {"localhost", "127.0.0.1"}:
+            raise ValueError("Email must go to the local capture server on loopback.")
         if self.clamd_host not in {"localhost", "127.0.0.1"}:
             raise ValueError("The local scanner relay must be on loopback.")
         if len(self.session_secret.get_secret_value()) < 32:

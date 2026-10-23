@@ -38,6 +38,7 @@ class User(Base):
     issuer: Mapped[str] = mapped_column(String(300))
     subject: Mapped[str] = mapped_column(String(100))
     display_name: Mapped[str] = mapped_column(String(100))
+    email: Mapped[str | None] = mapped_column(String(254))
     institution_id: Mapped[UUID] = mapped_column(ForeignKey("institutions.id"))
     role: Mapped[str] = mapped_column(String(30))
     active: Mapped[bool] = mapped_column(Boolean, default=True)
@@ -329,6 +330,33 @@ class Reminder(Base):
     generated_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
     late: Mapped[bool]
     message: Mapped[str] = mapped_column(String(300))
+
+
+class Notification(Base):
+    """One message to one person on one channel; content is frozen, delivery state is not."""
+
+    __tablename__ = "notifications"
+    __table_args__ = (
+        case_fk(),
+        UniqueConstraint("reminder_id", "recipient_id", "channel"),
+        CheckConstraint("channel IN ('in_app', 'email')"),
+        CheckConstraint(
+            "delivery_status IN ('not_applicable', 'pending', 'sent', 'failed', 'uncertain')"
+        ),
+    )
+    id: Mapped[UUID] = mapped_column(primary_key=True, default=uuid4)
+    instrument_id: Mapped[UUID]
+    institution_id: Mapped[UUID]
+    reminder_id: Mapped[UUID] = mapped_column(ForeignKey("reminders.id"))
+    recipient_id: Mapped[UUID] = mapped_column(ForeignKey("users.id"), index=True)
+    channel: Mapped[str] = mapped_column(String(10))
+    subject: Mapped[str] = mapped_column(String(150))
+    body: Mapped[str] = mapped_column(String(1000))
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+    read_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    delivery_status: Mapped[str] = mapped_column(String(20))
+    delivery_detail: Mapped[str] = mapped_column(String(200), default="")
+    delivered_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
 
 
 class AuditEvent(Base):

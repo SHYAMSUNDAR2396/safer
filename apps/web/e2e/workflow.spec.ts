@@ -358,12 +358,41 @@ test("overdue renewal shows separate dates and escalates to the assigned reviewe
   await expect(page.locator(".reminder.action_due")).toContainText(
     "Renew or replace this FDR",
   );
+  await expect(async () => {
+    await page.reload();
+    await page.getByRole("button", { name: ref, exact: true }).click();
+    await expect(
+      page
+        .locator(".reminder.action_due")
+        .getByText("Email to Alpha institution officer: sent"),
+    ).toBeVisible({ timeout: 2000 });
+  }).toPass({ timeout: 60000, intervals: [3000] });
+  await page.getByRole("button", { name: /Notifications, [1-9]/ }).click();
+  const inbox = page.getByRole("region", { name: "Notifications" });
+  await expect(
+    inbox.locator("li", { hasText: ref }).getByText("Renewal action due"),
+  ).toBeVisible();
   await page.screenshot({
     path: "test-results/deadlines.png",
     fullPage: true,
   });
+  await inbox
+    .locator("li", { hasText: ref })
+    .getByRole("button", { name: "Mark as read" })
+    .click();
+  await expect(
+    inbox.locator("li", { hasText: ref }).getByRole("button", {
+      name: "Mark as read",
+    }),
+  ).toHaveCount(0);
   await signOut(page);
   await login(page, "reviewer");
+  await page.getByRole("button", { name: /Notifications/ }).click();
+  await expect(
+    page
+      .getByRole("region", { name: "Notifications" })
+      .locator("li", { hasText: ref }),
+  ).toContainText("Escalated to reviewer");
   await expect(page.getByRole("row", { name: new RegExp(ref) })).toContainText(
     "Escalated",
   );

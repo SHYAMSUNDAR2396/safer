@@ -166,7 +166,24 @@ export type Deadlines = {
     due_at: string;
     generated_at: string;
     late: boolean;
+    deliveries: {
+      recipient: string;
+      channel: "email";
+      status: "pending" | "sent" | "failed" | "uncertain";
+      detail: string;
+    }[];
   }[];
   upcoming: { step: string; kind: string; due_at: string }[];
   escalation_owners: string[];
+};
+export type Inbox = {
+  unread_count: number;
+  items: {
+    id: string;
+    instrument_id: string;
+    subject: string;
+    body: string;
+    created_at: string;
+    read: boolean;
+  }[];
 };

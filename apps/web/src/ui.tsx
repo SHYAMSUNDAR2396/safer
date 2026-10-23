@@ -1,9 +1,10 @@
-import { useEffect, useRef, type ReactNode } from "react";
-import { BellRing, CalendarClock, Check, X } from "lucide-react";
+import { useEffect, useRef, useState, type ReactNode } from "react";
+import { Bell, BellRing, CalendarClock, Check, X } from "lucide-react";
 import { api, day } from "./api";
 import type {
   AuditEvent,
   Deadlines,
+  Inbox as InboxData,
   DocumentFile,
   DocumentKind,
   Instrument,
@@ -167,6 +168,13 @@ const reminderLabels: Record<Deadlines["reminders"][number]["kind"], string> = {
   escalation: "Escalated to reviewer",
 };
 
+const deliveryLabels = {
+  pending: "sending",
+  sent: "sent (local capture)",
+  failed: "failed",
+  uncertain: "uncertain — may not have arrived",
+};
+
 function stepLabel(step: string) {
   if (step.startsWith("reminder:")) return `${step.slice(9)}-day notice`;
   return step === "action_due" ? "Action due" : "Escalation";
@@ -228,6 +236,20 @@ export function DeadlinesPanel({ data }: { data: Deadlines }) {
                 Due {new Date(r.due_at).toLocaleString("en-IN")} · generated{" "}
                 {new Date(r.generated_at).toLocaleString("en-IN")}
               </small>
+              {r.deliveries.length > 0 && (
+                <span className="deliveries">
+                  {r.deliveries.map((d) => (
+                    <span
+                      key={d.recipient}
+                      className={`badge delivery-${d.status}`}
+                      title={d.detail}
+                    >
+                      <span />
+                      Email to {d.recipient}: {deliveryLabels[d.status]}
+                    </span>
+                  ))}
+                </span>
+              )}
             </li>
           ))}
         </ul>
@@ -245,5 +267,71 @@ export function DeadlinesPanel({ data }: { data: Deadlines }) {
         </p>
       )}
     </section>
+  );
+}
+
+export function Inbox({ me }: { me: Me }) {
+  const [data, setData] = useState<InboxData | null>(null);
+  const [open, setOpen] = useState(false);
+  const load = () =>
+    api<InboxData>("/api/v1/notifications")
+      .then(setData)
+      .catch(() => undefined);
+  useEffect(() => {
+    void load();
+    const timer = setInterval(load, 60000);
+    return () => clearInterval(timer);
+  }, []);
+  async function read(id: string) {
+    try {
+      const current = await refreshedSession(me);
+      await api(
+        `/api/v1/notifications/${id}/read`,
+        { method: "POST" },
+        current.csrf_token,
+      );
+    } finally {
+      void load();
+    }
+  }
+  const unread = data?.unread_count ?? 0;
+  return (
+    <div className="inbox">
+      <button
+        className="icon-button"
+        aria-label={`Notifications, ${unread} unread`}
+        aria-expanded={open}
+        onClick={() => setOpen((v) => !v)}
+      >
+        <Bell size={18} />
+        {unread > 0 && <span className="unread">{unread}</span>}
+      </button>
+      {open && (
+        <div className="inbox-panel" role="region" aria-label="Notifications">
+          <strong>Notifications</strong>
+          {data?.items.length ? (
+            <ul>
+              {data.items.map((n) => (
+                <li key={n.id} className={n.read ? "read" : ""}>
+                  <b>{n.subject}</b>
+                  <span>{n.body.split("\n")[0]}</span>
+                  <small>
+                    {n.body.split("\n")[1]} ·{" "}
+                    {new Date(n.created_at).toLocaleString("en-IN")}
+                  </small>
+                  {!n.read && (
+                    <button className="text-button" onClick={() => read(n.id)}>
+                      Mark as read
+                    </button>
+                  )}
+                </li>
+              ))}
+            </ul>
+          ) : (
+            <p className="doc-empty">No notifications yet.</p>
+          )}
+        </div>
+      )}
+    </div>
   );
 }

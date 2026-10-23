@@ -51,6 +51,7 @@ import {
   Badge,
   DeadlinesPanel,
   Dialog,
+  Inbox,
   Timeline,
 } from "./ui";
 
@@ -817,7 +818,7 @@ export default function App() {
           </p>
         </div>
         <div className="sidebar-footer">
-          SAFER <span>v0.7 · Maturity monitoring</span>
+          SAFER <span>v0.8 · Notifications</span>
         </div>
       </aside>
       <div className="workspace">
@@ -827,6 +828,7 @@ export default function App() {
             {me.institution.name}
           </span>
           <div className="account">
+            <Inbox me={me} />
             <span className="avatar">{me.display_name[0]}</span>
             <div>
               <strong>{me.display_name}</strong>

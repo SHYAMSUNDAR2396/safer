@@ -19,7 +19,7 @@ from sqlalchemy import func, or_, select, update
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.orm import Session
 
-from safer import scanning
+from safer import notifications, scanning
 from safer.models import Job, JobAttempt
 
 # All job timestamps use the database clock: host and container clocks can drift apart.
@@ -42,13 +42,16 @@ class ScanPayload(BaseModel):
     document_id: UUID
 
 
-def scan_handler(db: Session, ctx: Context, payload: ScanPayload):
+def scan_handler(db: Session, ctx: Context, payload: ScanPayload, final: bool):
     if scanning.scan_document(db, ctx.s3, ctx.settings, payload.document_id) == "error":
         raise Retry("scanner or storage unavailable")
 
 
 # kind -> (payload schema, handler). Payloads are JSON validated per kind; nothing is unpickled.
-HANDLERS = {"scan_document": (ScanPayload, scan_handler)}
+HANDLERS = {
+    "scan_document": (ScanPayload, scan_handler),
+    "send_email": (notifications.EmailPayload, notifications.send_email),
+}
 
 
 def enqueue(db: Session, kind: str, payload: dict, dedup_key: str, max_attempts: int = 3):
@@ -139,7 +142,7 @@ def run(db: Session, job_id, ctx: Context) -> str:
             db, job_id, attempt, "dead", f"unknown or invalid job ({type(e).__name__})", started
         )
     try:
-        handler(db, ctx, data)
+        handler(db, ctx, data, final=attempt >= max_attempts)
         return _finish(db, job_id, attempt, "succeeded", "", started)
     except Retry as e:
         error = str(e)

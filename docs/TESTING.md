@@ -72,3 +72,9 @@ CI workflow repeats build, lint, migrations, API tests and browser tests using e
 - Audit trail now names system actors by source ("SAFER scheduler", "SAFER malware scanner").
 - Playwright: **7 passed**; the new scenario submits an FDR maturing in 10 days, waits for the real relay sweep, sees the separate dates, overdue action and escalation with its owner, and the reviewer queue's Escalated flag.
 - Environment: Colima had stopped (machine restart); restarted it and the Compose stack with volumes intact.
+
+## Recorded results — SAF-015, 23 October 2026
+
+- API suite: **134 passed** (8 new): recipients limited to institution officers and assigned reviewers (beta, auditor excluded); inactive and unassigned people get nothing; private inbox with per-user read state and CSRF; real Mailpit capture with notification-id Message-ID; unreachable SMTP retried then shown failed; connection lost during DATA shown uncertain and not resent; non-capture mode and non-loopback SMTP rejected by settings; notification content immutable.
+- Fixed my own test ordering: deactivating alpha before creating the record made the create fail; the record is now submitted first.
+- Playwright: **7 passed**; the deadline scenario now waits for real email jobs to report "sent", opens the bell inbox, marks the notification read, and checks the reviewer's escalation notification.

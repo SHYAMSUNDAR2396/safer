@@ -17,3 +17,5 @@ SAF-011: reviewers are scoped by explicit assignment, not by token claims or ins
 SAF-012: simulator answers are HMAC-signed with a key derived from the local session secret and verified with constant-time comparison; binding to request id, provider, FDR reference, case version and time window is checked before any evidence is written. The simulator is in-process and makes no network calls. It is labelled in UI, data (method, source) and API, and excluded from confirmation counts. Real bank integration remains unauthorised (SAF-036).
 
 SAF-013: the broker requires a generated password and binds to loopback; Celery accepts JSON only, messages carry only a job id, and job payloads are validated against a per-kind schema before any handler runs. Unknown kinds or invalid payloads end as dead without executing.
+
+SAF-015: notifications are visible only to their recipient; recipients are resolved from institution membership and reviewer assignment at generation time. Email goes only to the loopback capture server; settings reject any other host or mode. Email bodies contain the reminder text, FDR reference and bank name; treat captured mail as confidential.

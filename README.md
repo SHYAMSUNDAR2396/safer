@@ -42,6 +42,8 @@ npm ci
 npm run dev
 ```
 
+Captured demo email is visible at **http://localhost:58025** (Mailpit; nothing leaves the machine).
+
 Open **http://localhost:5173** (use `localhost`, not `127.0.0.1`, for OIDC). Open `.local/demo-users.json` locally for generated passwords. Never commit or share that file. `alpha` and `beta` belong to separate institutions. `auditor` has read-only access to Alpha. `reviewer` is an AICTE reviewer assigned to Alpha only. `sync_identity.py` adds users created after your Keycloak was first initialised; it is a no-op otherwise. No public signup exists.
 
 ## Try the slice

@@ -25,6 +25,7 @@ from safer.models import (
     Submission,
     User,
 )
+from safer.notifications import deliveries, fanout
 from safer.security import DB, Actor
 
 router = APIRouter(prefix="/api/v1")
@@ -122,6 +123,7 @@ def sweep(db: Session, now: datetime | None = None) -> int:
                 .returning(Reminder.id)
             ).scalar()
             if inserted:
+                fanout(db, inserted, item, step["kind"], step["owner_role"], step["message"])
                 db.add(
                     AuditEvent(
                         institution_id=item.institution_id,
@@ -158,6 +160,7 @@ def deadline_view(db: Session, item: Instrument) -> dict:
         select(Reminder).where(Reminder.instrument_id == item.id).order_by(Reminder.due_at)
     ).all()
     done = {r.step for r in fired}
+    sent = deliveries(db, [r.id for r in fired])
     upcoming = [
         {"step": s["step"], "kind": s["kind"], "due_at": due_at(s["day"]).isoformat()}
         for s in (plan(item.maturity_date, required_until, schedule) if schedule else [])
@@ -182,6 +185,7 @@ def deadline_view(db: Session, item: Instrument) -> dict:
                 "generated_at": r.generated_at.isoformat(),
                 "late": r.late,
                 "schedule_version": r.schedule_version,
+                "deliveries": sent.get(r.id, []),
             }
             for r in fired
         ],

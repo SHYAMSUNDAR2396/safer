@@ -1,4 +1,4 @@
-# Implemented scope: M1 / SAF-001–007, M2 / SAF-008–012, M3 / SAF-013–014
+# Implemented scope: M1 / SAF-001–007, M2 / SAF-008–012, M3 / SAF-013–015
 
 Source: ../docs/design/NIDHISETU-REQUIREMENTS-ARCHITECTURE-v2.md and ../docs/SAFER-IMPLEMENTATION-BACKLOG.md. Later branding is SAFER.
 
@@ -98,3 +98,16 @@ Delivery is at-least-once; handlers must be idempotent (the scan handler is). Al
 | Escalation ownership | Escalations are owned by the institution's assigned reviewers, listed on the record; an unowned escalation shows "no reviewer assigned"; the queue flags escalated cases |
 
 Notices whose time passed before submission are skipped; overdue actions and escalations are not. Escalation currently fires whenever the action date has passed because renewal/replacement linking arrives in SAF-016. Delivery of notifications (in-app, email) is SAF-015. The default schedule (90/60/30/7 days, 30-day lead, 7-day escalation) is illustrative and needs policy-owner validation.
+
+## SAF-015 — notifications
+
+| Requirement | Delivered |
+|---|---|
+| In-app notification | Each generated reminder notifies its recipients; bell with unread count, private inbox, per-user read state (CSRF-protected) |
+| Local email capture | Email jobs (outbox) deliver to Mailpit on loopback; Message-ID is the notification id |
+| Recipient scope | Institution steps → active institution officers of that institution (not auditors); escalations → active assigned reviewers; nobody else |
+| Visible failed/uncertain | Per-recipient delivery state on each reminder: sent, failed (after retries or permanent refusal) or uncertain (connection lost during send, not retried) |
+| Separate real-provider authorisation | `email_mode` accepts only `capture` and SMTP must be loopback; enabling a real provider needs a reviewed code and configuration change |
+| No exactly-once claim | Documented: at-least-once jobs; uncertain sends are surfaced rather than retried |
+
+Observation and review events do not notify yet; only reminders do.

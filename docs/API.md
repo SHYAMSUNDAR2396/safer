@@ -26,6 +26,8 @@ Live OpenAPI: `http://localhost:8000/openapi.json`; interactive docs: `/docs`. S
 | POST | /api/v1/discrepancies/{id}/replies | message, resolve (reviewers only); 409 once resolved |
 | POST | /api/v1/reviews/{id}/bank-requests | Body {}; asks the SIMULATED bank; 201 with outcome confirmed, not_found, timeout, rejected or stale |
 | GET | /api/v1/instruments/{id}/deadlines | Maturity, action and obligation dates, schedule version, generated reminders, upcoming steps, escalation owners |
+| GET | /api/v1/notifications | Own in-app notifications (latest 50) and unread count |
+| POST | /api/v1/notifications/{id}/read | Mark own notification read; 204 |
 | GET | /health/live | Process liveness |
 | GET | /health/ready | Database connection readiness |
 
@@ -44,3 +46,5 @@ Submission returns 409 `documents_required` until each required kind's current d
 Case views include `bank_requests` and each comparison row's `simulated` flag; the queue reports `simulated_fields` separately from `confirmed_fields`.
 
 Review case views include `deadlines`; queue rows include `escalated`.
+
+Deadline reminders include `deliveries`: per-recipient email status (pending, sent, failed, uncertain) and detail.
