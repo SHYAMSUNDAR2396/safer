@@ -19,6 +19,7 @@ from safer.models import (
     Institution,
     Instrument,
     Obligation,
+    ReleaseRequest,
     Reminder,
     Submission,
     User,
@@ -207,6 +208,17 @@ def queue(user: Reviewer, db: DB):
     return {"items": items}
 
 
+def release_views(db, item) -> list[dict]:
+    from safer.releases import request_view  # releases builds on this module
+
+    rows = db.scalars(
+        select(ReleaseRequest)
+        .where(ReleaseRequest.instrument_id == item.id)
+        .order_by(ReleaseRequest.created_at)
+    ).all()
+    return [request_view(db, r) for r in rows]
+
+
 @router.get("/reviews/{id}")
 def case(id: UUID, user: Reviewer, db: DB):
     item = assigned_case(db, user, id)
@@ -227,6 +239,7 @@ def case(id: UUID, user: Reviewer, db: DB):
         "bank_requests": bank_views(db, id),
         "deadlines": deadline_view(db, item),
         "replacement": replacement_view(db, item),
+        "releases": release_views(db, item),
         "coverage": coverage_view(db, db.get(Obligation, item.obligation_id)),
         "audit": audit_items(db, item),
     }

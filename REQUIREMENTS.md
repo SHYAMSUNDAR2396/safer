@@ -1,4 +1,4 @@
-# Implemented scope: M1 / SAF-001–007, M2 / SAF-008–012, M3 / SAF-013–016, M4 / SAF-017–018
+# Implemented scope: M1 / SAF-001–007, M2 / SAF-008–012, M3 / SAF-013–016, M4 / SAF-017–019
 
 Source: ../docs/design/NIDHISETU-REQUIREMENTS-ARCHITECTURE-v2.md and ../docs/SAFER-IMPLEMENTATION-BACKLOG.md. Later branding is SAFER.
 
@@ -147,3 +147,17 @@ Grant rows are append-only apart from the allowed transitions (pending → activ
 | Past decision snapshots | `policies.snapshot()` gives id, version, rules and validation state for decisions to copy (used by SAF-019) |
 
 Release rules schema: required clearances (no-dues certificate, closure/approval letter, bank lien release, audit confirmation) and whether release may happen only after the obligation ends. Seed publishes an illustrative release policy v1. Document requirements and the reminder schedule remain separately versioned/configured.
+
+## SAF-019 — release requests and competent decisions (FR06)
+
+| Requirement | Delivered |
+|---|---|
+| Release request under policy | Institution requests release of a submitted FDR; the release policy in force is resolved and snapshotted on the request; eligibility per policy (obligation ended, or cover moved by an accepted replacement); one live request per FDR |
+| Assigned clearance | Reviewers holding review authority record each clearance the policy requires, once each; clearances outside the policy are refused |
+| Hold / return / reject / decision | Reviewers hold, resume, return (institution resubmits) and reopen; institution withdraws; a holder of release authority approves or rejects |
+| Row locks, current evidence, authority | Decisions lock request and FDR rows; require release authority; approval refused with pending clearances, contradicting evidence or open observations |
+| Separation of duties | Whoever recorded a clearance cannot decide the request |
+| Stale / concurrent / replayed | The approver submits the `basis` fingerprint they saw (412 if stale); Idempotency-Key replay returns the same decision; concurrent decisions yield one 200, one 409 |
+| Material changes invalidate approval | The basis covers FDR version, submission, evidence, observations, replacement links, current documents, clearances and policy version; any change after approval shows "approval invalidated" until reopened and decided again |
+
+Approval is an administrative decision only. Execution evidence and reconciliation are SAF-020; no payment API exists.

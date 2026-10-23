@@ -40,6 +40,7 @@ import type {
 import "./styles.css";
 import { Observations, ReplacementPanel, ReviewWorkspace } from "./Review";
 import { AccessWorkspace } from "./Access";
+import { InstitutionRelease } from "./Release";
 import {
   events,
   documentStatus,
@@ -615,6 +616,9 @@ function Details({
         />
       )}
       {item.status === "submitted" && <Observations id={item.id} me={me} />}
+      {item.status === "submitted" && (
+        <InstitutionRelease id={item.id} me={me} />
+      )}
       {confirm && (
         <Dialog
           title="Submit this metadata?"
@@ -847,7 +851,7 @@ export default function App() {
           </p>
         </div>
         <div className="sidebar-footer">
-          SAFER <span>v1.0 · Scoped authority</span>
+          SAFER <span>v1.1 · Release decisions</span>
         </div>
       </aside>
       <div className="workspace">

@@ -1,6 +1,7 @@
 import { useEffect, useState, type FormEvent } from "react";
 import {
   ArrowLeft,
+  Landmark,
   Repeat2,
   FlaskConical,
   ChevronRight,
@@ -14,6 +15,7 @@ import {
 } from "lucide-react";
 import { api, day, money } from "./api";
 import { MyAuthority } from "./Access";
+import { ReleaseCard, ReleaseDecisions } from "./Release";
 import type {
   BankExchange,
   CaseField,
@@ -658,6 +660,24 @@ function CaseView({
             onChange={load}
           />
           <BankSimulator data={data} me={me} onChange={load} />
+          {data.releases.length > 0 && (
+            <section className="panel documents">
+              <div className="section-title">
+                <Landmark size={19} />
+                <h2>Release requests</h2>
+              </div>
+              {data.releases.map((r) => (
+                <ReleaseCard
+                  key={r.id}
+                  req={r}
+                  me={me}
+                  canReview
+                  canDecide={false}
+                  onChange={load}
+                />
+              ))}
+            </section>
+          )}
           <section className="panel documents">
             <div className="section-title">
               <MessageSquareWarning size={19} />
@@ -764,6 +784,7 @@ export function ReviewWorkspace({ me }: { me: Me }) {
         </div>
       </div>
       <MyAuthority me={me} />
+      <ReleaseDecisions me={me} />
       <div className="stats">
         <div className="stat">
           <span>

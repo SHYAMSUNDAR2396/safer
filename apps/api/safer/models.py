@@ -446,6 +446,58 @@ class Policy(Base):
     published_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
 
 
+class ReleaseRequest(Base):
+    """A request to release one FDR, governed by the policy snapshot it was made under."""
+
+    __tablename__ = "release_requests"
+    __table_args__ = (
+        case_fk(),
+        CheckConstraint(
+            "status IN ('open', 'on_hold', 'returned', 'approved', 'rejected', 'withdrawn')"
+        ),
+        CheckConstraint(
+            "status NOT IN ('approved', 'rejected')"
+            " OR (decided_by IS NOT NULL AND decision_basis IS NOT NULL)",
+            name="decision_recorded",
+        ),
+    )
+    id: Mapped[UUID] = mapped_column(primary_key=True, default=uuid4)
+    instrument_id: Mapped[UUID] = mapped_column(index=True)
+    institution_id: Mapped[UUID]
+    requested_by: Mapped[UUID] = mapped_column(ForeignKey("users.id"))
+    reason: Mapped[str] = mapped_column(String(500))
+    policy_snapshot: Mapped[dict] = mapped_column(JSONB)
+    status: Mapped[str] = mapped_column(String(20), default="open")
+    decided_by: Mapped[UUID | None] = mapped_column(ForeignKey("users.id"))
+    decided_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    decision_note: Mapped[str] = mapped_column(String(500), default="")
+    decision_basis: Mapped[str | None] = mapped_column(String(64))
+    decision_key: Mapped[str | None] = mapped_column(String(100))
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+
+
+class ReleaseClearance(Base):
+    __tablename__ = "release_clearances"
+    __table_args__ = (UniqueConstraint("request_id", "clearance"),)
+    id: Mapped[UUID] = mapped_column(primary_key=True, default=uuid4)
+    request_id: Mapped[UUID] = mapped_column(ForeignKey("release_requests.id"), index=True)
+    clearance: Mapped[str] = mapped_column(String(40))
+    cleared_by: Mapped[UUID] = mapped_column(ForeignKey("users.id"))
+    note: Mapped[str] = mapped_column(String(500))
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+
+
+class ReleaseEvent(Base):
+    __tablename__ = "release_events"
+    id: Mapped[UUID] = mapped_column(primary_key=True, default=uuid4)
+    request_id: Mapped[UUID] = mapped_column(ForeignKey("release_requests.id"), index=True)
+    kind: Mapped[str] = mapped_column(String(30))
+    actor_id: Mapped[UUID] = mapped_column(ForeignKey("users.id"))
+    note: Mapped[str] = mapped_column(String(500), default="")
+    basis: Mapped[str | None] = mapped_column(String(64))
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+
+
 class AuditEvent(Base):
     __tablename__ = "audit_events"
     id: Mapped[UUID] = mapped_column(primary_key=True, default=uuid4)

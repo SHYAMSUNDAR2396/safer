@@ -152,6 +152,7 @@ export type ReviewCase = {
   deadlines: Deadlines;
   replacement: ReplacementView;
   coverage: Coverage;
+  releases: Release[];
   audit: AuditEvent[];
 };
 export type Deadlines = {
@@ -264,4 +265,28 @@ export type PolicyVersion = {
   owner_validated: boolean;
   drafted_by: string;
   published_by: string | null;
+};
+export type Release = {
+  id: string;
+  instrument_id: string;
+  bank_reference: string;
+  status:
+    "open" | "on_hold" | "returned" | "approved" | "rejected" | "withdrawn";
+  effective_status: string;
+  approval_valid: boolean;
+  reason: string;
+  requested_by: string;
+  created_at: string;
+  policy: {
+    policy_id: string;
+    version: number;
+    owner_validated: boolean;
+    rules: { clearances: string[]; release_not_before: string };
+  };
+  clearances: { clearance: string; done: boolean; cleared_by: string | null }[];
+  ready_for_decision: boolean;
+  decided_by: string | null;
+  decision_note: string;
+  basis: string;
+  events: { kind: string; actor: string; note: string; created_at: string }[];
 };

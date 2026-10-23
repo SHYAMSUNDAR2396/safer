@@ -555,3 +555,122 @@ test("a policy draft is published only by a second administrator", async ({
     "not validated by the policy owner",
   );
 });
+
+async function ensureReleaseAuthority(page: Page) {
+  await login(page, "admin1");
+  const grants = page.locator("section", {
+    has: page.getByRole("heading", { name: "All grants" }),
+  });
+  await expect(grants.locator(".grant").first()).toBeVisible();
+  const held = grants
+    .locator(".grant", { hasText: "Second Bureau reviewer · Release approval" })
+    .filter({ hasText: "Active" });
+  if ((await held.count()) === 0) {
+    const pendingOwn = page
+      .locator("section", {
+        has: page.getByRole("heading", { name: "Awaiting approval" }),
+      })
+      .locator(".grant", { hasText: "Second Bureau reviewer" });
+    if ((await pendingOwn.count()) === 0) {
+      const form = page.locator("form");
+      await form
+        .getByLabel("Reviewer")
+        .selectOption({ label: "Second Bureau reviewer" });
+      await form.getByLabel("Authority").selectOption("release_approve");
+      await form
+        .getByLabel("Institution")
+        .selectOption({ label: "Alpha Technical Institute" });
+      await form.getByLabel("Reason").fill("Release cover for Alpha");
+      await page
+        .getByRole("button", { name: "Request (needs second approval)" })
+        .click();
+      await expect(pendingOwn.first()).toBeVisible();
+    }
+    await signOut(page);
+    await login(page, "admin2");
+    await page
+      .locator("section", {
+        has: page.getByRole("heading", { name: "Awaiting approval" }),
+      })
+      .locator(".grant", { hasText: "Second Bureau reviewer" })
+      .first()
+      .getByRole("button", { name: "Approve" })
+      .click();
+    await expect(
+      page.getByText("Nothing is waiting for approval."),
+    ).toBeVisible();
+  }
+  await signOut(page);
+}
+
+test("replaced FDR is released after clearances and a competent decision", async ({
+  page,
+}) => {
+  test.setTimeout(90000);
+  await ensureReleaseAuthority(page);
+  const stamp = Date.now();
+  const oldRef = `REL-OLD-${stamp}`;
+  const newRef = `REL-NEW-${stamp}`;
+  await submitCase(page, oldRef);
+  await submitCase(page, newRef, "2028-10-01");
+  await login(page, "alpha");
+  await page.getByRole("button", { name: oldRef, exact: true }).click();
+  const option = page.locator("option", { hasText: newRef });
+  await page
+    .getByLabel("Renewed or replacement FDR")
+    .selectOption((await option.getAttribute("value"))!);
+  await page.getByRole("button", { name: "Propose as replacement" }).click();
+  await signOut(page);
+  await login(page, "reviewer");
+  await page.getByRole("button", { name: oldRef, exact: true }).click();
+  await page.getByRole("button", { name: "Accept replacement" }).click();
+  await expect(page.getByText(/Accepted by/)).toBeVisible();
+  await signOut(page);
+
+  await login(page, "alpha");
+  await page.getByRole("button", { name: oldRef, exact: true }).click();
+  await page
+    .getByLabel("Reason for release")
+    .fill("Cover moved to the renewed FDR");
+  await page.getByRole("button", { name: "Request release" }).click();
+  await expect(
+    page.locator(".release-card").getByText("Open · clearances in progress"),
+  ).toBeVisible();
+  await signOut(page);
+
+  await login(page, "reviewer");
+  await page.getByRole("button", { name: oldRef, exact: true }).click();
+  const card = page.locator(".release-card");
+  for (let i = 0; i < 2; i++) {
+    await card.getByLabel("Note for this action").fill("Original received");
+    await card
+      .getByRole("button", { name: "Record clearance" })
+      .first()
+      .click();
+    await expect(
+      card.getByText("cleared by Regulation Bureau reviewer"),
+    ).toHaveCount(i + 1);
+  }
+  await signOut(page);
+
+  await login(page, "reviewer2");
+  const decision = page.locator(".release-card", { hasText: oldRef }).first();
+  await decision.getByLabel("Note for this action").fill("Clearances complete");
+  await page.screenshot({
+    path: "test-results/release.png",
+    fullPage: true,
+  });
+  await decision.getByRole("button", { name: "Approve release" }).click();
+  // Decided requests leave the approver's queue.
+  await expect(page.locator(".release-card", { hasText: oldRef })).toHaveCount(
+    0,
+  );
+  await signOut(page);
+
+  await login(page, "alpha");
+  await page.getByRole("button", { name: oldRef, exact: true }).click();
+  await expect(page.locator(".release-card")).toContainText("Approved");
+  await expect(page.locator(".release-card")).toContainText(
+    "Approved · Second Bureau reviewer",
+  );
+});

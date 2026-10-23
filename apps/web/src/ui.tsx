@@ -31,6 +31,16 @@ export const events: Record<string, string> = {
   "replacement.proposed": "Replacement proposed",
   "replacement.accepted": "Replacement accepted",
   "replacement.rejected": "Replacement rejected",
+  "release.requested": "Release requested",
+  "release.cleared": "Release clearance recorded",
+  "release.held": "Release put on hold",
+  "release.resumed": "Release resumed",
+  "release.returned": "Release returned to institution",
+  "release.resubmitted": "Release resubmitted",
+  "release.reopened": "Release reopened after change",
+  "release.approved": "Release approved",
+  "release.rejected": "Release rejected",
+  "release.withdrawn": "Release withdrawn",
 };
 export const documentStatus: Record<DocumentFile["status"], string> = {
   pending: "Uploading",

@@ -41,6 +41,12 @@ Live OpenAPI: `http://localhost:8000/openapi.json`; interactive docs: `/docs`. S
 | POST | /api/v1/admin/policies | Admin: draft code, applies_to, effective_from/until, rules, note |
 | POST | /api/v1/admin/policies/{id}/publish | A different admin publishes; 409 if already published |
 | GET | /api/v1/obligations/{id}/policy?on=YYYY-MM-DD | Release policy in force for an own obligation |
+| POST | /api/v1/instruments/{id}/release-requests | Institution: reason; 409 not_eligible / no_policy / already_requested |
+| GET | /api/v1/instruments/{id}/release-requests, /api/v1/release-requests/{id} | Requests with policy snapshot, clearances, events, basis, validity |
+| POST | /api/v1/release-requests/{id}/withdraw, /resubmit | Institution |
+| POST | /api/v1/release-requests/{id}/clearances, /hold, /resume, /return, /reopen | Reviewer with review authority |
+| POST | /api/v1/release-requests/{id}/decision | Holder of release authority: approve, note, basis; Idempotency-Key required |
+| GET | /api/v1/releases/pending | Approver: open requests within release authority |
 | GET | /health/live | Process liveness |
 | GET | /health/ready | Database connection readiness |
 

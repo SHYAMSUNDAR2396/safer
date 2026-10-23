@@ -97,3 +97,7 @@ Ruling: grants replace review assignments (migrated), because expiry, revocation
 ## M4 / SAF-018 — 23 October 2026
 
 Ruling: one policy code (`release`) with a strict rules schema rather than a generic rules engine; new codes get their own schema when a decision needs them.
+
+## M4 / SAF-019 — 23 October 2026
+
+Ruling: "competent decision" = active release authority plus separation from clearance work. "Material change" is a deterministic fingerprint rather than a list of watched events, so new material inputs only need adding to `basis()`.
