@@ -1,6 +1,6 @@
 import hashlib
 import secrets
-from datetime import UTC, datetime
+from datetime import UTC, date, datetime, timedelta
 from pathlib import Path
 
 import pytest
@@ -8,7 +8,7 @@ from dotenv import dotenv_values
 from fastapi.testclient import TestClient
 from safer.config import Settings
 from safer.main import create_app
-from safer.models import Grant, Institution, Obligation, SessionRow, User
+from safer.models import Grant, Institution, Obligation, Policy, SessionRow, User
 from sqlalchemy import create_engine, text
 from sqlalchemy.orm import Session
 
@@ -29,7 +29,7 @@ def db(settings):
     with engine.begin() as conn:
         conn.execute(
             text(
-                "TRUNCATE institutions, users, sessions, obligations, instruments, submissions, documents, document_scans, grants, evidence_records, discrepancies, discrepancy_replies, bank_requests, bank_responses, jobs, job_attempts, reminders, reminder_schedules, notifications, replacement_links, policies, release_requests, release_clearances, release_events, audit_events CASCADE"
+                "TRUNCATE institutions, users, sessions, obligations, instruments, submissions, documents, document_scans, grants, evidence_records, discrepancies, discrepancy_replies, bank_requests, bank_responses, jobs, job_attempts, reminders, reminder_schedules, notifications, replacement_links, policies, release_requests, release_clearances, release_events, release_instructions, release_executions, audit_events CASCADE"
             )
         )
         # The migration's default schedule, restored because tests may add versions.
@@ -148,3 +148,44 @@ def clients(db, actors, settings):
         c.close()
         # No lifespan runs without `with TestClient`, so release each app's pool here.
         c.app.state.engine.dispose()
+
+
+CLEARANCES = ["no_dues_certificate", "closure_approval_letter"]
+
+
+@pytest.fixture
+def setup(db, actors):
+    """Published release policy, cover period ended, and reviewer2 as release approver."""
+    db.add(
+        Policy(
+            code="release",
+            version=1,
+            applies_to="*",
+            effective_from=date(2026, 1, 1),
+            rules={"clearances": CLEARANCES, "release_not_before": "obligation_end"},
+            note="Test policy",
+            status="published",
+            drafted_by=actors["admin1"].id,
+            published_by=actors["admin2"].id,
+            published_at=datetime.now(UTC),
+        )
+    )
+    grant_release(db, actors, "reviewer2")
+    obligation = db.get(Obligation, actors["obligations"][0].id)
+    obligation.required_until = date.today() - timedelta(days=1)
+    db.commit()
+
+
+def grant_release(db, actors, name):
+    db.add(
+        Grant(
+            user_id=actors[name].id,
+            authority="release_approve",
+            institution_id=actors["alpha"].institution_id,
+            status="active",
+            requested_by=actors["admin1"].id,
+            approved_by=actors["admin2"].id,
+            reason="Release authority",
+        )
+    )
+    db.commit()

@@ -101,3 +101,9 @@ Ruling: one policy code (`release`) with a strict rules schema rather than a gen
 ## M4 / SAF-019 — 23 October 2026
 
 Ruling: "competent decision" = active release authority plus separation from clearance work. "Material change" is a deterministic fingerprint rather than a list of watched events, so new material inputs only need adding to `basis()`.
+
+## M4 / SAF-020 — 24 October 2026
+
+Ruling: instruction is a record with a reference; delivery to the bank and actual execution are outside SAFER. Reconciliation compares amounts only; date and beneficiary checks would need real bank data formats.
+
+M4 (SAF-017–020) complete locally.

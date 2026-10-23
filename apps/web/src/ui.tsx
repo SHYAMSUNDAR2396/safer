@@ -41,6 +41,10 @@ export const events: Record<string, string> = {
   "release.approved": "Release approved",
   "release.rejected": "Release rejected",
   "release.withdrawn": "Release withdrawn",
+  "release.instructed": "Release instruction issued",
+  "release.executed": "Bank execution recorded",
+  "release.closed": "Release closed",
+  "instrument.closed": "FDR closed after reconciled release",
 };
 export const documentStatus: Record<DocumentFile["status"], string> = {
   pending: "Uploading",
@@ -110,7 +114,11 @@ export function Badge({ status }: { status: Instrument["status"] }) {
   return (
     <span className={`badge ${status}`}>
       <span />
-      {status === "draft" ? "Draft" : "Submitted"}
+      {status === "draft"
+        ? "Draft"
+        : status === "closed"
+          ? "Closed"
+          : "Submitted"}
     </span>
   );
 }

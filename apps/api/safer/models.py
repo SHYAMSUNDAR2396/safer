@@ -85,7 +85,7 @@ class Instrument(Base):
         ),
         CheckConstraint("principal_amount > 0"),
         CheckConstraint("maturity_date > issue_date"),
-        CheckConstraint("status IN ('draft', 'submitted')"),
+        CheckConstraint("status IN ('draft', 'submitted', 'closed')"),
         CheckConstraint("currency = 'INR'"),
         UniqueConstraint("id", "institution_id"),
         UniqueConstraint("id", "institution_id", "obligation_id"),
@@ -453,10 +453,11 @@ class ReleaseRequest(Base):
     __table_args__ = (
         case_fk(),
         CheckConstraint(
-            "status IN ('open', 'on_hold', 'returned', 'approved', 'rejected', 'withdrawn')"
+            "status IN ('open', 'on_hold', 'returned', 'approved', 'rejected', 'withdrawn',"
+            " 'closed')"
         ),
         CheckConstraint(
-            "status NOT IN ('approved', 'rejected')"
+            "status NOT IN ('approved', 'rejected', 'closed')"
             " OR (decided_by IS NOT NULL AND decision_basis IS NOT NULL)",
             name="decision_recorded",
         ),
@@ -473,6 +474,42 @@ class ReleaseRequest(Base):
     decision_note: Mapped[str] = mapped_column(String(500), default="")
     decision_basis: Mapped[str | None] = mapped_column(String(64))
     decision_key: Mapped[str | None] = mapped_column(String(100))
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+
+
+class ReleaseInstruction(Base):
+    """The instruction sent to the bank. A record only: the portal moves no money."""
+
+    __tablename__ = "release_instructions"
+    id: Mapped[UUID] = mapped_column(primary_key=True, default=uuid4)
+    request_id: Mapped[UUID] = mapped_column(ForeignKey("release_requests.id"), unique=True)
+    reference: Mapped[str] = mapped_column(String(40), unique=True)
+    addressed_to: Mapped[str] = mapped_column(String(120))
+    amount: Mapped[Decimal] = mapped_column(Numeric(18, 2))
+    note: Mapped[str] = mapped_column(String(500))
+    issued_by: Mapped[UUID] = mapped_column(ForeignKey("users.id"))
+    basis: Mapped[str] = mapped_column(String(64))
+    issued_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+
+
+class ReleaseExecution(Base):
+    """Independent evidence that the bank executed the instruction; latest governs."""
+
+    __tablename__ = "release_executions"
+    __table_args__ = (
+        CheckConstraint("executed_amount > 0"),
+        CheckConstraint("method IN ('bank_portal', 'bank_email', 'bank_letter', 'phone_callback')"),
+    )
+    id: Mapped[UUID] = mapped_column(primary_key=True, default=uuid4)
+    request_id: Mapped[UUID] = mapped_column(ForeignKey("release_requests.id"), index=True)
+    executed_amount: Mapped[Decimal] = mapped_column(Numeric(18, 2))
+    executed_on: Mapped[date]
+    bank_transaction_ref: Mapped[str] = mapped_column(String(100))
+    source: Mapped[str] = mapped_column(String(200))
+    method: Mapped[str] = mapped_column(String(30))
+    observer_id: Mapped[UUID] = mapped_column(ForeignKey("users.id"))
+    observed_at: Mapped[datetime] = mapped_column(DateTime(timezone=True))
+    note: Mapped[str] = mapped_column(String(500))
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
 
 

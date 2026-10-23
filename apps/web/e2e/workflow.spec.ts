@@ -661,16 +661,48 @@ test("replaced FDR is released after clearances and a competent decision", async
     fullPage: true,
   });
   await decision.getByRole("button", { name: "Approve release" }).click();
-  // Decided requests leave the approver's queue.
+  const approved = page.locator(".release-card", { hasText: oldRef }).first();
+  await expect(approved).toContainText("Approved");
+  await approved
+    .getByLabel("Note for this action")
+    .fill("Lien release and refund");
+  await approved
+    .getByRole("button", { name: "Issue release instruction" })
+    .click();
+  // Instructed requests leave the approver's queue.
   await expect(page.locator(".release-card", { hasText: oldRef })).toHaveCount(
     0,
   );
   await signOut(page);
 
+  await login(page, "reviewer");
+  await page.getByRole("button", { name: oldRef, exact: true }).click();
+  const live = page.locator(".release-card");
+  await expect(live).toContainText("SAFER-REL-");
+  await live.getByText("Record the bank's execution evidence").click();
+  await live.getByLabel("Bank transaction reference").fill("UTR-E2E-0001");
+  await live
+    .getByLabel("Source (bank, branch or contact)")
+    .fill("Synthetic Review Bank, Fort branch");
+  await live.getByLabel("Evidence note").fill("Credit advice received");
+  await live.getByRole("button", { name: "Record execution evidence" }).click();
+  await expect(live).toContainText("executed amount matches the instruction");
+  await live.getByLabel("Note for this action").fill("Reconciled");
+  await live.getByRole("button", { name: "Close case" }).click();
+  await expect(live).toContainText("Closed · executed and reconciled");
+  await page.screenshot({
+    path: "test-results/release-closed.png",
+    fullPage: true,
+  });
+  await signOut(page);
+
   await login(page, "alpha");
   await page.getByRole("button", { name: oldRef, exact: true }).click();
-  await expect(page.locator(".release-card")).toContainText("Approved");
+  await expect(page.locator(".release-card")).toContainText(
+    "Closed · executed and reconciled",
+  );
   await expect(page.locator(".release-card")).toContainText(
     "Approved · Second Bureau reviewer",
   );
+  await expect(page.locator(".page-heading .badge")).toContainText("Closed");
 });

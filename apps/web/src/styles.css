@@ -1687,3 +1687,31 @@ label.check input {
   display: grid;
   gap: 4px;
 }
+
+.reconcile {
+  margin: 8px 0;
+  padding: 8px 12px;
+  border-radius: 6px;
+  font-size: 12px;
+  font-weight: 600;
+}
+.reconcile.matched {
+  background: #e9f4ed;
+  color: #427b58;
+}
+.reconcile.difference {
+  background: #fbeceb;
+  color: #a2463e;
+}
+.release-card.closed {
+  border-left: 3px solid #4a8261;
+}
+.badge.release-closed {
+  background: #e9f4ed;
+  color: #427b58;
+}
+
+.badge.closed {
+  background: #f1f3f2;
+  color: #536e62;
+}

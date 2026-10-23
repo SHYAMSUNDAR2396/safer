@@ -51,14 +51,15 @@ def scoped_instrument(db, user, id: UUID, lock=False):
     return item
 
 
-def assigned_case(db, user, id: UUID):
+def assigned_case(db, user, id: UUID, closed: bool = False):
     """A submitted instrument of an institution this reviewer has active authority over, else 404."""
     item = db.scalar(
         select(Instrument)
         .join(Grant, Grant.institution_id == Instrument.institution_id)
         .where(
             Instrument.id == id,
-            Instrument.status == "submitted",
+            # Closed cases stay readable as history; actions need a live (submitted) case.
+            Instrument.status.in_(("submitted", "closed") if closed else ("submitted",)),
             Grant.user_id == user.id,
             active("review"),
         )

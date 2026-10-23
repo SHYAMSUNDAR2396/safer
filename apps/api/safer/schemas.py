@@ -68,7 +68,7 @@ class InstrumentView(BaseModel):
     currency: Literal["INR"]
     issue_date: date
     maturity_date: date
-    status: Literal["draft", "submitted"]
+    status: Literal["draft", "submitted", "closed"]
     verification_status: Literal["unverified"] = "unverified"
     row_version: int
     created_at: datetime

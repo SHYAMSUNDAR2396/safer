@@ -9,12 +9,13 @@ after approval voids that approval until the case is reopened and decided again.
 
 import hashlib
 import json
-from datetime import UTC, date, datetime
-from typing import Annotated
+from datetime import UTC, date, datetime, timedelta
+from decimal import Decimal
+from typing import Annotated, Literal
 from uuid import UUID
 
 from fastapi import APIRouter, Header, Request
-from pydantic import BaseModel, ConfigDict, Field, StringConstraints
+from pydantic import AwareDatetime, BaseModel, ConfigDict, Field, StringConstraints, model_validator
 from sqlalchemy import or_, select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
@@ -30,12 +31,15 @@ from safer.models import (
     Obligation,
     ReleaseClearance,
     ReleaseEvent,
+    ReleaseExecution,
+    ReleaseInstruction,
     ReleaseRequest,
     ReplacementLink,
     Submission,
     User,
 )
 from safer.reviews import case_evidence, comparison, discrepancy_views
+from safer.schemas import AMOUNT, Text100, Text200, plain_text
 from safer.security import DB, Actor, Reviewer, Writer, audit
 
 router = APIRouter(prefix="/api/v1")
@@ -64,6 +68,31 @@ class DecisionInput(BaseModel):
     approve: Annotated[bool, Field(strict=True)]
     note: Note
     basis: Annotated[str, StringConstraints(max_length=64)]
+
+
+class ExecutionInput(BaseModel):
+    """What the bank says it did, obtained independently of the institution."""
+
+    model_config = ConfigDict(extra="forbid")
+    executed_amount: Annotated[str, Field(strict=True, pattern=AMOUNT)]
+    executed_on: date
+    bank_transaction_ref: Text100
+    source: Text200
+    method: Literal["bank_portal", "bank_email", "bank_letter", "phone_callback"]
+    observed_at: AwareDatetime
+    note: Note
+
+    @model_validator(mode="after")
+    def plausible(self):
+        plain_text(self.bank_transaction_ref)
+        plain_text(self.source)
+        if Decimal(self.executed_amount) <= 0:
+            raise ValueError("Executed amount must be positive")
+        if self.executed_on > date.today():
+            raise ValueError("Execution cannot be in the future")
+        if self.observed_at > datetime.now(UTC) + timedelta(minutes=5):
+            raise ValueError("Observation time cannot be in the future")
+        return self
 
 
 def holds(db: Session, user: User, authority: str, institution_id) -> bool:
@@ -147,6 +176,18 @@ def request_view(db: Session, req: ReleaseRequest) -> dict:
     )
     current = basis(db, req, item)
     valid = req.status == "approved" and req.decision_basis == current
+    instruction = db.scalar(
+        select(ReleaseInstruction).where(ReleaseInstruction.request_id == req.id)
+    )
+    executions = db.scalars(
+        select(ReleaseExecution)
+        .where(ReleaseExecution.request_id == req.id)
+        .order_by(ReleaseExecution.created_at, ReleaseExecution.id)
+    ).all()
+    ids |= {e.observer_id for e in executions} | ({instruction.issued_by} if instruction else set())
+    names = dict(
+        db.execute(select(User.id, User.display_name).where(User.id.in_(ids - {None}))).all()
+    )
     required = req.policy_snapshot["rules"]["clearances"]
     done = {c.clearance for c in clearances}
     return {
@@ -177,6 +218,30 @@ def request_view(db: Session, req: ReleaseRequest) -> dict:
         "decided_at": req.decided_at.isoformat() if req.decided_at else None,
         "decision_note": req.decision_note,
         "basis": current,
+        "instruction": {
+            "reference": instruction.reference,
+            "addressed_to": instruction.addressed_to,
+            "amount": f"{instruction.amount:.2f}",
+            "issued_by": names[instruction.issued_by],
+            "issued_at": instruction.issued_at.isoformat(),
+            "note": instruction.note,
+        }
+        if instruction
+        else None,
+        "executions": [
+            {
+                "executed_amount": f"{e.executed_amount:.2f}",
+                "executed_on": e.executed_on.isoformat(),
+                "bank_transaction_ref": e.bank_transaction_ref,
+                "source": e.source,
+                "method": e.method,
+                "observer": names[e.observer_id],
+                "observed_at": e.observed_at.isoformat(),
+                "note": e.note,
+            }
+            for e in executions
+        ],
+        "reconciliation": reconcile(instruction, executions),
         "events": [
             {
                 "kind": e.kind,
@@ -186,6 +251,20 @@ def request_view(db: Session, req: ReleaseRequest) -> dict:
             }
             for e in events
         ],
+    }
+
+
+def reconcile(instruction, executions) -> dict | None:
+    """Code compares the latest execution evidence with the instruction; nothing else decides."""
+    if not instruction or not executions:
+        return None
+    executed = executions[-1].executed_amount
+    difference = executed - instruction.amount
+    return {
+        "status": "matched" if difference == 0 else "difference",
+        "instructed": f"{instruction.amount:.2f}",
+        "executed": f"{executed:.2f}",
+        "difference": f"{difference:.2f}",
     }
 
 
@@ -295,12 +374,14 @@ def pending_decisions(user: Reviewer, db: DB):
         .where(
             Grant.user_id == user.id,
             active("release_approve"),
-            ReleaseRequest.status.in_(("open",)),
+            ReleaseRequest.status.in_(("open", "approved")),
         )
         .order_by(ReleaseRequest.created_at)
         .limit(100)
     ).all()
-    return {"items": [request_view(db, r) for r in rows]}
+    # Approved requests stay here until the approver issues the instruction.
+    views = [request_view(db, r) for r in rows]
+    return {"items": [v for v in views if v["status"] == "open" or not v["instruction"]]}
 
 
 @router.post("/release-requests/{id}/withdraw")
@@ -426,3 +507,80 @@ def scoped_instrument_for_update(db: Session, id) -> Instrument:
         .with_for_update()
         .execution_options(populate_existing=True)
     )
+
+
+def valid_approval(db: Session, req: ReleaseRequest, item: Instrument):
+    if req.status != "approved":
+        raise Problem(409, "not_approved", "Only an approved release can proceed.")
+    if req.decision_basis != basis(db, req, item):
+        raise Problem(
+            409, "approval_invalidated", "The case changed after approval; it must be re-decided."
+        )
+
+
+@router.post("/release-requests/{id}/instruction", status_code=201)
+def instruction(id: UUID, data: NoteInput, request: Request, user: Reviewer, db: DB):
+    req = locked(db, id)
+    if not holds(db, user, "release_approve", req.institution_id):
+        raise Problem(404, "not_found", "Release request not found.")
+    item = scoped_instrument_for_update(db, req.instrument_id)
+    valid_approval(db, req, item)
+    if db.scalar(select(ReleaseInstruction.id).where(ReleaseInstruction.request_id == req.id)):
+        raise Problem(409, "already_instructed", "An instruction was already issued.")
+    db.add(
+        ReleaseInstruction(
+            request_id=req.id,
+            reference=f"SAFER-REL-{req.id.hex[:10].upper()}",
+            addressed_to=item.bank_name,
+            amount=item.principal_amount,
+            note=data.note,
+            issued_by=user.id,
+            basis=req.decision_basis,
+        )
+    )
+    return step(db, request, user, req, "instructed", data.note)
+
+
+@router.post("/release-requests/{id}/execution", status_code=201)
+def execution(id: UUID, data: ExecutionInput, request: Request, user: Reviewer, db: DB):
+    req = as_reviewer(db, user, id)
+    expect(req, "approved")
+    ins = db.scalar(select(ReleaseInstruction).where(ReleaseInstruction.request_id == req.id))
+    if not ins:
+        raise Problem(409, "no_instruction", "No release instruction has been issued.")
+    if user.id in (ins.issued_by, req.decided_by):
+        raise Problem(
+            403,
+            "separation_of_duties",
+            "Whoever approved or instructed cannot confirm the bank's execution.",
+        )
+    db.add(
+        ReleaseExecution(
+            **data.model_dump(exclude={"executed_amount"}),
+            executed_amount=Decimal(data.executed_amount),
+            request_id=req.id,
+            observer_id=user.id,
+        )
+    )
+    return step(db, request, user, req, "executed", f"{data.bank_transaction_ref}: {data.note}")
+
+
+@router.post("/release-requests/{id}/close")
+def close(id: UUID, data: NoteInput, request: Request, user: Reviewer, db: DB):
+    req = as_reviewer(db, user, id)
+    item = scoped_instrument_for_update(db, req.instrument_id)
+    valid_approval(db, req, item)
+    ins = db.scalar(select(ReleaseInstruction).where(ReleaseInstruction.request_id == req.id))
+    executions = db.scalars(
+        select(ReleaseExecution)
+        .where(ReleaseExecution.request_id == req.id)
+        .order_by(ReleaseExecution.created_at, ReleaseExecution.id)
+    ).all()
+    if not executions:
+        raise Problem(409, "no_execution", "Approval alone cannot close a case: record execution.")
+    if reconcile(ins, executions)["status"] != "matched":
+        raise Problem(409, "not_reconciled", "Execution does not match the instruction.")
+    req.status = "closed"
+    item.status, item.row_version = "closed", item.row_version + 1
+    audit(db, request, user, "instrument.closed", item, {"request_id": str(req.id)})
+    return step(db, request, user, req, "closed", data.note)

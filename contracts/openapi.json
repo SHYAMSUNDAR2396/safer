@@ -2158,6 +2158,150 @@
           }
         }
       }
+    },
+    "/api/v1/release-requests/{id}/instruction": {
+      "post": {
+        "summary": "Instruction",
+        "operationId": "instruction_api_v1_release_requests__id__instruction_post",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/NoteInput"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/release-requests/{id}/execution": {
+      "post": {
+        "summary": "Execution",
+        "operationId": "execution_api_v1_release_requests__id__execution_post",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/ExecutionInput"
+              }
+            }
+          }
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/release-requests/{id}/close": {
+      "post": {
+        "summary": "Close",
+        "operationId": "close_api_v1_release_requests__id__close_post",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/NoteInput"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {
@@ -2374,6 +2518,66 @@
         ],
         "title": "EvidenceInput"
       },
+      "ExecutionInput": {
+        "properties": {
+          "executed_amount": {
+            "type": "string",
+            "pattern": "^(0|[1-9][0-9]{0,15})(\\.[0-9]{1,2})?$",
+            "title": "Executed Amount"
+          },
+          "executed_on": {
+            "type": "string",
+            "format": "date",
+            "title": "Executed On"
+          },
+          "bank_transaction_ref": {
+            "type": "string",
+            "maxLength": 100,
+            "minLength": 1,
+            "title": "Bank Transaction Ref"
+          },
+          "source": {
+            "type": "string",
+            "maxLength": 200,
+            "minLength": 1,
+            "title": "Source"
+          },
+          "method": {
+            "type": "string",
+            "enum": [
+              "bank_portal",
+              "bank_email",
+              "bank_letter",
+              "phone_callback"
+            ],
+            "title": "Method"
+          },
+          "observed_at": {
+            "type": "string",
+            "format": "date-time",
+            "title": "Observed At"
+          },
+          "note": {
+            "type": "string",
+            "maxLength": 500,
+            "minLength": 1,
+            "title": "Note"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "executed_amount",
+          "executed_on",
+          "bank_transaction_ref",
+          "source",
+          "method",
+          "observed_at",
+          "note"
+        ],
+        "title": "ExecutionInput",
+        "description": "What the bank says it did, obtained independently of the institution."
+      },
       "GrantInput": {
         "properties": {
           "user_id": {
@@ -2478,7 +2682,8 @@
             "type": "string",
             "enum": [
               "draft",
-              "submitted"
+              "submitted",
+              "closed"
             ],
             "title": "Status"
           },

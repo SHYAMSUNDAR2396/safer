@@ -1,51 +1,12 @@
 from concurrent.futures import ThreadPoolExecutor
-from datetime import UTC, date, datetime, timedelta
+from datetime import date, timedelta
 
 import pytest
-from safer.models import Grant, Obligation, Policy, ReleaseRequest
+from conftest import CLEARANCES, grant_release
+from safer.models import Obligation, ReleaseRequest
 from sqlalchemy import func, select, text
 from sqlalchemy.exc import DBAPIError
 from test_reviews import evidence, submitted
-
-CLEARANCES = ["no_dues_certificate", "closure_approval_letter"]
-
-
-@pytest.fixture
-def setup(db, actors):
-    """Published release policy, cover period ended, and reviewer2 as release approver."""
-    db.add(
-        Policy(
-            code="release",
-            version=1,
-            applies_to="*",
-            effective_from=date(2026, 1, 1),
-            rules={"clearances": CLEARANCES, "release_not_before": "obligation_end"},
-            note="Test policy",
-            status="published",
-            drafted_by=actors["admin1"].id,
-            published_by=actors["admin2"].id,
-            published_at=datetime.now(UTC),
-        )
-    )
-    grant_release(db, actors, "reviewer2")
-    obligation = db.get(Obligation, actors["obligations"][0].id)
-    obligation.required_until = date.today() - timedelta(days=1)
-    db.commit()
-
-
-def grant_release(db, actors, name):
-    db.add(
-        Grant(
-            user_id=actors[name].id,
-            authority="release_approve",
-            institution_id=actors["alpha"].institution_id,
-            status="active",
-            requested_by=actors["admin1"].id,
-            approved_by=actors["admin2"].id,
-            reason="Release authority",
-        )
-    )
-    db.commit()
 
 
 def request(client, item, reason="Obligation period ended"):

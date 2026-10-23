@@ -1,4 +1,4 @@
-# Implemented scope: M1 / SAF-001–007, M2 / SAF-008–012, M3 / SAF-013–016, M4 / SAF-017–019
+# Implemented scope: M1 / SAF-001–007, M2 / SAF-008–012, M3 / SAF-013–016, M4 / SAF-017–020
 
 Source: ../docs/design/NIDHISETU-REQUIREMENTS-ARCHITECTURE-v2.md and ../docs/SAFER-IMPLEMENTATION-BACKLOG.md. Later branding is SAFER.
 
@@ -161,3 +161,13 @@ Release rules schema: required clearances (no-dues certificate, closure/approval
 | Material changes invalidate approval | The basis covers FDR version, submission, evidence, observations, replacement links, current documents, clearances and policy version; any change after approval shows "approval invalidated" until reopened and decided again |
 
 Approval is an administrative decision only. Execution evidence and reconciliation are SAF-020; no payment API exists.
+
+## SAF-020 — authorization, instruction, execution evidence and reconciliation (FR07)
+
+| Requirement | Delivered |
+|---|---|
+| Distinct stages | Authorization (SAF-019 approval) → instruction (holder of release authority, only while the approval is valid; reference, bank, amount) → independent execution evidence (amount, date, bank transaction reference, source, method, observer, time) → code reconciliation → closure |
+| Separation | Whoever approved or instructed cannot record the bank's execution |
+| Reconciliation | Latest execution evidence vs instructed amount: matched or difference (short/over); earlier evidence kept |
+| No closure from approval alone | Close requires a still-valid approval, execution evidence and a matched reconciliation; closing marks the FDR closed, removing it from coverage, queues and reminders while keeping it readable as history |
+| No payment API | The instruction is a record; no route initiates or simulates a transfer (asserted by test over the OpenAPI paths) |

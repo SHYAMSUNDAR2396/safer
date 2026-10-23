@@ -579,10 +579,12 @@ function Details({
               {missing.join(", ")}.
             </p>
           )}
-          {item.status === "submitted" && (
+          {item.status !== "draft" && (
             <div className="submitted-note">
-              <Check size={18} />A submission snapshot has been preserved. This
-              record is read-only.
+              <Check size={18} />
+              {item.status === "closed"
+                ? "Released after a reconciled bank execution and closed. This record is read-only."
+                : "A submission snapshot has been preserved. This record is read-only."}
             </div>
           )}
         </section>
@@ -602,7 +604,7 @@ function Details({
         onRequirements={setMissing}
       />
       {deadlines && <DeadlinesPanel data={deadlines} />}
-      {replacement && item.status === "submitted" && (
+      {replacement && item.status !== "draft" && (
         <ReplacementPanel
           view={replacement}
           coverage={coverage}
@@ -615,10 +617,8 @@ function Details({
           }}
         />
       )}
-      {item.status === "submitted" && <Observations id={item.id} me={me} />}
-      {item.status === "submitted" && (
-        <InstitutionRelease id={item.id} me={me} />
-      )}
+      {item.status !== "draft" && <Observations id={item.id} me={me} />}
+      {item.status !== "draft" && <InstitutionRelease id={item.id} me={me} />}
       {confirm && (
         <Dialog
           title="Submit this metadata?"
@@ -851,7 +851,7 @@ export default function App() {
           </p>
         </div>
         <div className="sidebar-footer">
-          SAFER <span>v1.1 · Release decisions</span>
+          SAFER <span>v1.2 · Governed release</span>
         </div>
       </aside>
       <div className="workspace">

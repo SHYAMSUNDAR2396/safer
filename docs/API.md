@@ -47,6 +47,9 @@ Live OpenAPI: `http://localhost:8000/openapi.json`; interactive docs: `/docs`. S
 | POST | /api/v1/release-requests/{id}/clearances, /hold, /resume, /return, /reopen | Reviewer with review authority |
 | POST | /api/v1/release-requests/{id}/decision | Holder of release authority: approve, note, basis; Idempotency-Key required |
 | GET | /api/v1/releases/pending | Approver: open requests within release authority |
+| POST | /api/v1/release-requests/{id}/instruction | Holder of release authority; valid approval required; one per request |
+| POST | /api/v1/release-requests/{id}/execution | Reviewer (not approver/instructor): executed_amount, executed_on, bank_transaction_ref, source, method, observed_at, note |
+| POST | /api/v1/release-requests/{id}/close | Reviewer: needs valid approval and matched reconciliation; FDR becomes closed |
 | GET | /health/live | Process liveness |
 | GET | /health/ready | Database connection readiness |
 
@@ -67,3 +70,5 @@ Case views include `bank_requests` and each comparison row's `simulated` flag; t
 Review case views include `deadlines`; queue rows include `escalated`.
 
 Deadline reminders include `deliveries`: per-recipient email status (pending, sent, failed, uncertain) and detail.
+
+Release views now include `instruction`, `executions` and `reconciliation`. Instrument status may be `closed`. Review case views include the FDR `status` and remain readable after closure.

@@ -25,7 +25,7 @@ export type Draft = {
 export type Instrument = Draft & {
   id: string;
   institution_id: string;
-  status: "draft" | "submitted";
+  status: "draft" | "submitted" | "closed";
   verification_status: "unverified";
   row_version: number;
   created_at: string;
@@ -140,6 +140,7 @@ export type Discrepancy = {
 };
 export type ReviewCase = {
   instrument_id: string;
+  status: "submitted" | "closed";
   institution: { id: string; name: string };
   submitted_at: string;
   claim: Record<CaseField, string>;
@@ -271,7 +272,13 @@ export type Release = {
   instrument_id: string;
   bank_reference: string;
   status:
-    "open" | "on_hold" | "returned" | "approved" | "rejected" | "withdrawn";
+    | "open"
+    | "on_hold"
+    | "returned"
+    | "approved"
+    | "rejected"
+    | "withdrawn"
+    | "closed";
   effective_status: string;
   approval_valid: boolean;
   reason: string;
@@ -288,5 +295,26 @@ export type Release = {
   decided_by: string | null;
   decision_note: string;
   basis: string;
+  instruction: {
+    reference: string;
+    addressed_to: string;
+    amount: string;
+    issued_by: string;
+    issued_at: string;
+  } | null;
+  executions: {
+    executed_amount: string;
+    executed_on: string;
+    bank_transaction_ref: string;
+    source: string;
+    method: string;
+    observer: string;
+  }[];
+  reconciliation: {
+    status: "matched" | "difference";
+    instructed: string;
+    executed: string;
+    difference: string;
+  } | null;
   events: { kind: string; actor: string; note: string; created_at: string }[];
 };

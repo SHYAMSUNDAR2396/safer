@@ -46,3 +46,5 @@ Migration 012: role `admin`; `grants` with checks for no self-grant/self-approva
 Migration 013: `obligations.kind` (applicability key) and `policies` (unique code+version, publisher ≠ drafter check, end after start), with a trigger that permits only the draft → published transition and freezes all content.
 
 Migration 014: `release_requests` (policy snapshot, status with allowed transitions enforced by trigger, decision recorded check, one live request per FDR), append-only `release_clearances` (one per clearance) and `release_events`.
+
+Migration 015: instrument and release status `closed` (approved → closed transition), append-only `release_instructions` (one per request, unique reference) and `release_executions` (positive amount, independent methods only).

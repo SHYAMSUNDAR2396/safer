@@ -23,3 +23,5 @@ SAF-015: notifications are visible only to their recipient; recipients are resol
 SAF-017: authority is data with expiry, revocation and provenance rather than a role flag. Dual control and no-self-grant rules are database constraints, so a bug in the API cannot bypass them. Revocation takes effect on the next request because every scope check queries active grants. Admin sessions use the same OIDC, CSRF and expiry controls; production needs MFA for administrators (SAF-027).
 
 SAF-019: release decisions require explicit release authority (SAF-017), separation from clearance work, and a current basis fingerprint; approvals become void on material change. The portal records decisions only; it cannot move money.
+
+SAF-020: execution is evidenced, not performed: SAFER records instructions and independent bank execution evidence and reconciles them; it has no payment capability. Recording execution is separated from approving and instructing.

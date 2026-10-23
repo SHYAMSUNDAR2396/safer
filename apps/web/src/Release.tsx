@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { Gavel, Landmark } from "lucide-react";
-import { api } from "./api";
+import { api, money } from "./api";
 import { clearanceLabels } from "./Access";
 import type { Me, Release } from "./types";
 import { Notice, refreshedSession } from "./ui";
@@ -13,6 +13,7 @@ const statusText: Record<string, string> = {
   approval_invalidated: "Approval invalidated by a material change",
   rejected: "Rejected",
   withdrawn: "Withdrawn",
+  closed: "Closed · executed and reconciled",
 };
 const eventText: Record<string, string> = {
   requested: "Requested",
@@ -25,6 +26,9 @@ const eventText: Record<string, string> = {
   approved: "Approved",
   rejected: "Rejected",
   withdrawn: "Withdrawn",
+  instructed: "Instruction issued",
+  executed: "Bank execution recorded",
+  closed: "Closed",
 };
 
 async function send(me: Me, path: string, body: unknown, key?: string) {
@@ -79,9 +83,16 @@ export function ReleaseCard({
   const institution = me.role === "institution_user";
   const withNote = (action: string) => () => act(action, { note });
   const open = s === "open" || s === "on_hold";
+  const valid = s === "approved" && req.approval_valid;
+  const canInstruct = canDecide && valid && !req.instruction;
+  const canExecute = canReview && s === "approved" && !!req.instruction;
+  const canClose =
+    canReview && valid && req.reconciliation?.status === "matched";
   const hasActions =
     (canReview && (open || (s === "approved" && !req.approval_valid))) ||
     (canDecide && s === "open") ||
+    canInstruct ||
+    canClose ||
     (institution && ["open", "on_hold", "returned"].includes(s));
   return (
     <div className={`release-card ${req.effective_status}`}>
@@ -186,6 +197,24 @@ export function ReleaseCard({
                 Withdraw request
               </button>
             )}
+            {canInstruct && (
+              <button
+                className="primary"
+                disabled={busy || !note.trim()}
+                onClick={withNote("instruction")}
+              >
+                Issue release instruction
+              </button>
+            )}
+            {canClose && (
+              <button
+                className="primary"
+                disabled={busy || !note.trim()}
+                onClick={withNote("close")}
+              >
+                Close case
+              </button>
+            )}
             {canDecide && s === "open" && (
               <>
                 <button
@@ -224,6 +253,21 @@ export function ReleaseCard({
           </div>
         </div>
       )}
+      {req.instruction && (
+        <p className="link-line">
+          Instruction <strong>{req.instruction.reference}</strong> to{" "}
+          {req.instruction.addressed_to} for {money(req.instruction.amount)} ·
+          issued by {req.instruction.issued_by}
+        </p>
+      )}
+      {req.executions.map((e, i) => (
+        <p key={i} className="link-line">
+          Bank executed {money(e.executed_amount)} on {e.executed_on} · ref{" "}
+          {e.bank_transaction_ref} · {e.source} · recorded by {e.observer}
+        </p>
+      ))}
+      {req.reconciliation && <Reconciliation r={req.reconciliation} />}
+      {canExecute && <ExecutionForm req={req} me={me} onChange={onChange} />}
       <ol className="release-events">
         {req.events.map((e, i) => (
           <li key={i}>
@@ -352,5 +396,142 @@ export function ReleaseDecisions({ me }: { me: Me }) {
         />
       ))}
     </section>
+  );
+}
+
+function Reconciliation({ r }: { r: NonNullable<Release["reconciliation"]> }) {
+  const short = r.difference.startsWith("-");
+  return (
+    <p className={`reconcile ${r.status}`} role="status">
+      Reconciliation:{" "}
+      {r.status === "matched"
+        ? "executed amount matches the instruction"
+        : `${money(r.difference.replace("-", ""))} ${short ? "short of" : "more than"} the instruction`}
+    </p>
+  );
+}
+
+function ExecutionForm({
+  req,
+  me,
+  onChange,
+}: {
+  req: Release;
+  me: Me;
+  onChange: () => void;
+}) {
+  const now = new Date(Date.now() - new Date().getTimezoneOffset() * 60000)
+    .toISOString()
+    .slice(0, 16);
+  const [f, setF] = useState({
+    executed_amount: req.instruction?.amount ?? "",
+    executed_on: now.slice(0, 10),
+    bank_transaction_ref: "",
+    source: "",
+    method: "bank_letter",
+    observed_at: now,
+    note: "",
+  });
+  const [error, setError] = useState("");
+  const [busy, setBusy] = useState(false);
+  const set = (k: keyof typeof f, v: string) => setF((o) => ({ ...o, [k]: v }));
+  async function save() {
+    setBusy(true);
+    setError("");
+    try {
+      await send(me, `/api/v1/release-requests/${req.id}/execution`, {
+        ...f,
+        observed_at: new Date(f.observed_at).toISOString(),
+      });
+      onChange();
+    } catch (e) {
+      setError((e as Error).message);
+    } finally {
+      setBusy(false);
+    }
+  }
+  return (
+    <details className="all-cover">
+      <summary>Record the bank's execution evidence</summary>
+      <fieldset disabled={busy} className="policy-form">
+        <div className="form-grid">
+          <label>
+            Amount the bank released (INR)
+            <input
+              inputMode="decimal"
+              value={f.executed_amount}
+              onChange={(e) => set("executed_amount", e.target.value)}
+            />
+          </label>
+          <label>
+            Executed on
+            <input
+              type="date"
+              value={f.executed_on}
+              onChange={(e) => set("executed_on", e.target.value)}
+            />
+          </label>
+        </div>
+        <div className="form-grid">
+          <label>
+            Bank transaction reference
+            <input
+              value={f.bank_transaction_ref}
+              maxLength={100}
+              onChange={(e) => set("bank_transaction_ref", e.target.value)}
+            />
+          </label>
+          <label>
+            Source (bank, branch or contact)
+            <input
+              value={f.source}
+              maxLength={200}
+              onChange={(e) => set("source", e.target.value)}
+            />
+          </label>
+        </div>
+        <div className="form-grid">
+          <label>
+            Method
+            <select
+              value={f.method}
+              onChange={(e) => set("method", e.target.value)}
+            >
+              <option value="bank_letter">Letter received from the bank</option>
+              <option value="bank_email">Email from the bank's domain</option>
+              <option value="bank_portal">Bank portal</option>
+              <option value="phone_callback">Call-back to the bank</option>
+            </select>
+          </label>
+          <label>
+            Observed at
+            <input
+              type="datetime-local"
+              max={now}
+              value={f.observed_at}
+              onChange={(e) => set("observed_at", e.target.value)}
+            />
+          </label>
+        </div>
+        <label>
+          Evidence note
+          <input
+            value={f.note}
+            maxLength={500}
+            onChange={(e) => set("note", e.target.value)}
+          />
+        </label>
+        {error && <Notice message={error} />}
+        <div className="dialog-actions">
+          <button
+            className="primary"
+            disabled={busy || !f.bank_transaction_ref || !f.source || !f.note}
+            onClick={save}
+          >
+            Record execution evidence
+          </button>
+        </div>
+      </fieldset>
+    </details>
   );
 }

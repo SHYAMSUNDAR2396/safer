@@ -566,19 +566,29 @@ function CaseView({
                 {new Date(data.submitted_at).toLocaleDateString("en-IN")}
               </p>
             </div>
-            <div className="heading-actions">
-              <button
-                className="secondary"
-                onClick={() => setDialog("observation")}
-              >
-                <MessageSquareWarning size={16} />
-                Raise observation
-              </button>
-              <button className="primary" onClick={() => setDialog("evidence")}>
-                <Plus size={16} />
-                Record evidence
-              </button>
-            </div>
+            {data.status === "closed" ? (
+              <span className="badge closed">
+                <span />
+                Closed
+              </span>
+            ) : (
+              <div className="heading-actions">
+                <button
+                  className="secondary"
+                  onClick={() => setDialog("observation")}
+                >
+                  <MessageSquareWarning size={16} />
+                  Raise observation
+                </button>
+                <button
+                  className="primary"
+                  onClick={() => setDialog("evidence")}
+                >
+                  <Plus size={16} />
+                  Record evidence
+                </button>
+              </div>
+            )}
           </div>
           <div className="detail-grid">
             <section className="panel">
@@ -659,7 +669,9 @@ function CaseView({
             focusId={data.instrument_id}
             onChange={load}
           />
-          <BankSimulator data={data} me={me} onChange={load} />
+          {data.status !== "closed" && (
+            <BankSimulator data={data} me={me} onChange={load} />
+          )}
           {data.releases.length > 0 && (
             <section className="panel documents">
               <div className="section-title">

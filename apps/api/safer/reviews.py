@@ -221,13 +221,14 @@ def release_views(db, item) -> list[dict]:
 
 @router.get("/reviews/{id}")
 def case(id: UUID, user: Reviewer, db: DB):
-    item = assigned_case(db, user, id)
+    item = assigned_case(db, user, id, closed=True)
     sub = db.scalar(select(Submission).where(Submission.instrument_id == id))
     institution = db.get(Institution, item.institution_id)
     records = case_evidence(db, [id])
     docs, states, current = instrument_documents(db, item)
     return {
         "instrument_id": str(id),
+        "status": item.status,
         "institution": {"id": str(institution.id), "name": institution.name},
         "submitted_at": sub.created_at.isoformat(),
         "claim": {field: sub.snapshot[field] for field in FIELDS},
