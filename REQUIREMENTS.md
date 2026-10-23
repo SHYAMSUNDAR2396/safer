@@ -1,4 +1,4 @@
-# Implemented scope: M1 / SAF-001–007, M2 / SAF-008–012, M3 / SAF-013–015
+# Implemented scope: M1 / SAF-001–007, M2 / SAF-008–012, M3 / SAF-013–016
 
 Source: ../docs/design/NIDHISETU-REQUIREMENTS-ARCHITECTURE-v2.md and ../docs/SAFER-IMPLEMENTATION-BACKLOG.md. Later branding is SAFER.
 
@@ -97,7 +97,7 @@ Delivery is at-least-once; handlers must be idempotent (the scan handler is). Al
 | Test clock and catch-up | `deadlines.sweep(db, now)` takes an injectable clock; a sweep generates everything due and unrecorded, so missed runs catch up; unique (instrument, step) prevents duplicates |
 | Escalation ownership | Escalations are owned by the institution's assigned reviewers, listed on the record; an unowned escalation shows "no reviewer assigned"; the queue flags escalated cases |
 
-Notices whose time passed before submission are skipped; overdue actions and escalations are not. Escalation currently fires whenever the action date has passed because renewal/replacement linking arrives in SAF-016. Delivery of notifications (in-app, email) is SAF-015. The default schedule (90/60/30/7 days, 30-day lead, 7-day escalation) is illustrative and needs policy-owner validation.
+Notices whose time passed before submission are skipped; overdue actions and escalations are not. A proposed or accepted replacement (SAF-016) settles the renewal action, so no action-due or escalation is generated for it. Delivery of notifications (in-app, email) is SAF-015. The default schedule (90/60/30/7 days, 30-day lead, 7-day escalation) is illustrative and needs policy-owner validation.
 
 ## SAF-015 — notifications
 
@@ -111,3 +111,15 @@ Notices whose time passed before submission are skipped; overdue actions and esc
 | No exactly-once claim | Documented: at-least-once jobs; uncertain sends are surfaced rather than retried |
 
 Observation and review events do not notify yet; only reminders do.
+
+## SAF-016 — replacement links and coverage (FR05)
+
+| Requirement | Delivered |
+|---|---|
+| Same-institution links | Composite foreign keys force predecessor and successor to share institution and obligation; both must be submitted; the successor must mature later |
+| No cycles | Live links are 1:1 on each side (partial unique indexes) and a chain walk refuses any link that would loop |
+| Proposed ≠ accepted coverage | Coverage = submitted FDRs that are neither replaced nor pending successors; proposed successors are reported separately; acceptance moves coverage from predecessor to successor |
+| Aggregate allocation lock, no double counting | Decisions lock the obligation row and re-read the link; concurrent decisions yield one 200 and one 409 |
+| Partial/split deferred | A successor below the predecessor's amount is refused with `partial_replacement` |
+
+Only assigned reviewers decide; history is immutable apart from the single proposed → accepted/rejected transition; both FDRs' audit trails record proposal and decision. Coverage is computed from submitted claims and labelled as such: it is not independently confirmed coverage.

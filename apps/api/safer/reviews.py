@@ -16,11 +16,13 @@ from safer.models import (
     EvidenceRecord,
     Institution,
     Instrument,
+    Obligation,
     Reminder,
     ReviewAssignment,
     Submission,
     User,
 )
+from safer.replacements import coverage_view, replacement_view
 from safer.schemas import DiscrepancyInput, EvidenceInput, ReplyInput
 from safer.security import DB, Actor, Reviewer, audit
 
@@ -223,6 +225,8 @@ def case(id: UUID, user: Reviewer, db: DB):
         "discrepancies": discrepancy_views(db, [id]),
         "bank_requests": bank_views(db, id),
         "deadlines": deadline_view(db, item),
+        "replacement": replacement_view(db, item),
+        "coverage": coverage_view(db, db.get(Obligation, item.obligation_id)),
         "audit": audit_items(db, item),
     }
 

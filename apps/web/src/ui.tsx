@@ -28,6 +28,9 @@ export const events: Record<string, string> = {
   "deadline.maturity_reminder": "Maturity reminder generated",
   "deadline.action_due": "Renewal action due",
   "deadline.escalation": "Escalated to reviewer",
+  "replacement.proposed": "Replacement proposed",
+  "replacement.accepted": "Replacement accepted",
+  "replacement.rejected": "Replacement rejected",
 };
 export const documentStatus: Record<DocumentFile["status"], string> = {
   pending: "Uploading",
@@ -203,7 +206,9 @@ export function DeadlinesPanel({ data }: { data: Deadlines }) {
           <dd>
             {data.action_due_date
               ? day(data.action_due_date)
-              : "Not needed · cover ends before maturity"}
+              : data.replacement_status
+                ? `Settled · replacement ${data.replacement_status}`
+                : "Not needed · cover ends before maturity"}
           </dd>
         </div>
         <div>

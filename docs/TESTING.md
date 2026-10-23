@@ -78,3 +78,9 @@ CI workflow repeats build, lint, migrations, API tests and browser tests using e
 - API suite: **134 passed** (8 new): recipients limited to institution officers and assigned reviewers (beta, auditor excluded); inactive and unassigned people get nothing; private inbox with per-user read state and CSRF; real Mailpit capture with notification-id Message-ID; unreachable SMTP retried then shown failed; connection lost during DATA shown uncertain and not resent; non-capture mode and non-loopback SMTP rejected by settings; notification content immutable.
 - Fixed my own test ordering: deactivating alpha before creating the record made the create fail; the record is now submitted first.
 - Playwright: **7 passed**; the deadline scenario now waits for real email jobs to report "sent", opens the bell inbox, marks the notification read, and checks the reviewer's escalation notification.
+
+## Recorded results — SAF-016, 23 October 2026
+
+- API suite: **149 passed** (15 new): proposed successor reported apart from counted cover; foreign, self, draft, partial, earlier-maturing and other-obligation successors refused with no row; one live proposal per side; cycle detection; acceptance moves cover with no double counting and is decided once; rejection restores both and allows a new proposal; only assigned reviewers decide; concurrent decisions → one 200, one 409; a proposal settles the renewal action (no action-due/escalation); link history immutable.
+- UI review found two problems, both fixed: the coverage list showed every FDR on the obligation (page 4,700 px tall on demo data), now the record's chain with the full list in a native disclosure; and the deadlines panel gave the wrong reason when a replacement settled the renewal.
+- Playwright: **8 passed**; new scenario: propose → reviewer accepts → old FDR shown Replaced, new Counts as cover, renewal shown settled.

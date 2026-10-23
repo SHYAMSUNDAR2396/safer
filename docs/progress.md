@@ -83,3 +83,9 @@ Ruling: due time is 09:30 IST on the computed day.
 ## M3 / SAF-015 — 23 October 2026
 
 Ruling: Mailpit v1.31.3 captures email locally. Handlers now receive `final` on their last attempt so a permanently undeliverable email ends as visibly failed rather than stuck pending.
+
+## M3 / SAF-016 — 23 October 2026
+
+Ruling: coverage counts submitted claims (labelled as such) because accepted-evidence coverage depends on the release lifecycle (M4). A proposal, not only an acceptance, settles the institution's renewal action; the reviewer's decision is then the open item.
+
+M3 (SAF-013–016) complete locally.

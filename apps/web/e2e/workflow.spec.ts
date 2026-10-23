@@ -35,14 +35,14 @@ async function login(page: Page, name: string) {
   await page.locator("#kc-login").click();
   await expect(page.getByRole("button", { name: "Sign out" })).toBeVisible();
 }
-async function submitCase(page: Page, ref: string) {
+async function submitCase(page: Page, ref: string, maturity = "2027-10-01") {
   await login(page, "alpha");
   await page.getByRole("button", { name: "New FDR" }).click();
   await page.getByLabel("Bank name").fill("Synthetic Review Bank");
   await page.getByLabel("FDR reference").fill(ref);
   await page.getByLabel("Principal amount (INR)").fill("250000.00");
   await page.getByLabel("Issue date").fill("2026-10-01");
-  await page.getByLabel("Maturity date").fill("2027-10-01");
+  await page.getByLabel("Maturity date").fill(maturity);
   await page.getByRole("button", { name: "Save draft" }).click();
   await page.getByLabel("Upload document").setInputFiles({
     name: "review-fdr.pdf",
@@ -400,4 +400,46 @@ test("overdue renewal shows separate dates and escalates to the assigned reviewe
   await expect(page.locator(".reminder.escalation")).toContainText(
     "Owner: Regulation Bureau reviewer",
   );
+});
+
+test("renewed FDR replaces the old one only after reviewer acceptance", async ({
+  page,
+}) => {
+  const stamp = Date.now();
+  const oldRef = `OLD-${stamp}`;
+  const newRef = `NEW-${stamp}`;
+  await submitCase(page, oldRef);
+  await submitCase(page, newRef, "2028-10-01");
+  await login(page, "alpha");
+  await page.getByRole("button", { name: oldRef, exact: true }).click();
+  const option = page.locator("option", { hasText: newRef });
+  await page
+    .getByLabel("Renewed or replacement FDR")
+    .selectOption((await option.getAttribute("value"))!);
+  await page.getByRole("button", { name: "Propose as replacement" }).click();
+  await expect(page.getByText("Proposed · awaiting reviewer")).toBeVisible();
+  await expect(
+    page.locator(".doc-list.chain li", { hasText: newRef }),
+  ).toContainText("Proposed replacement · not yet cover");
+  await signOut(page);
+  await login(page, "reviewer");
+  await page.getByRole("button", { name: oldRef, exact: true }).click();
+  await page.getByRole("button", { name: "Accept replacement" }).click();
+  await expect(
+    page.getByText(/Accepted by Regulation Bureau reviewer/),
+  ).toBeVisible();
+  await signOut(page);
+  await login(page, "alpha");
+  await page.getByRole("button", { name: oldRef, exact: true }).click();
+  await expect(
+    page.locator(".doc-list.chain li", { hasText: oldRef }),
+  ).toContainText("Replaced");
+  await expect(
+    page.locator(".doc-list.chain li", { hasText: newRef }),
+  ).toContainText("Counts as cover");
+  await expect(page.getByText("Settled · replacement accepted")).toBeVisible();
+  await page.screenshot({
+    path: "test-results/replacement.png",
+    fullPage: true,
+  });
 });

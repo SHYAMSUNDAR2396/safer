@@ -1,6 +1,7 @@
 import { useEffect, useState, type FormEvent } from "react";
 import {
   ArrowLeft,
+  Repeat2,
   FlaskConical,
   ChevronRight,
   ClipboardCheck,
@@ -15,6 +16,9 @@ import { api, day, money } from "./api";
 import type {
   BankExchange,
   CaseField,
+  Coverage,
+  Instrument,
+  ReplacementView,
   Comparison,
   Discrepancy,
   Evidence,
@@ -645,6 +649,13 @@ function CaseView({
             </section>
           </div>
           <DeadlinesPanel data={data.deadlines} />
+          <ReplacementPanel
+            view={data.replacement}
+            coverage={data.coverage}
+            me={me}
+            focusId={data.instrument_id}
+            onChange={load}
+          />
           <BankSimulator data={data} me={me} onChange={load} />
           <section className="panel documents">
             <div className="section-title">
@@ -884,5 +895,208 @@ export function ReviewWorkspace({ me }: { me: Me }) {
         )}
       </section>
     </>
+  );
+}
+
+const coverageStates = {
+  counting: "Counts as cover",
+  superseded: "Replaced",
+  proposed_successor: "Proposed replacement · not yet cover",
+};
+const linkStatus = {
+  proposed: "Proposed · awaiting reviewer",
+  accepted: "Accepted",
+  rejected: "Rejected",
+};
+
+export function ReplacementPanel({
+  view,
+  coverage,
+  me,
+  item,
+  focusId,
+  onChange,
+}: {
+  view: ReplacementView;
+  coverage: Coverage | null;
+  me: Me;
+  item?: Instrument;
+  focusId: string;
+  onChange: () => void;
+}) {
+  const [choice, setChoice] = useState("");
+  const [error, setError] = useState("");
+  const [busy, setBusy] = useState(false);
+  async function act(path: string, body: unknown) {
+    setBusy(true);
+    setError("");
+    try {
+      await post(me, path, body);
+      onChange();
+    } catch (e) {
+      setError((e as Error).message);
+    } finally {
+      setBusy(false);
+    }
+  }
+  const out = view.outgoing;
+  const related = new Set([
+    focusId,
+    out?.successor_id,
+    view.incoming?.predecessor_id,
+  ]);
+  const chain = coverage?.instruments.filter((i) => related.has(i.id)) ?? [];
+  const canPropose =
+    item?.status === "submitted" && me.role === "institution_user" && !out;
+  return (
+    <section className="panel documents">
+      <div className="section-title">
+        <Repeat2 size={19} />
+        <h2>Replacement and coverage</h2>
+      </div>
+      {error && <Notice message={error} />}
+      {out && (
+        <p className="link-line">
+          Replaced by <strong>{out.successor_reference}</strong> ·{" "}
+          {linkStatus[out.status]}
+          {out.decided_by && ` by ${out.decided_by}`}
+        </p>
+      )}
+      {view.incoming && (
+        <p className="link-line">
+          Replaces <strong>{view.incoming.predecessor_reference}</strong> ·{" "}
+          {linkStatus[view.incoming.status]}
+        </p>
+      )}
+      {out?.status === "proposed" && me.role === "reviewer" && (
+        <div className="simulator-actions">
+          <button
+            className="secondary"
+            disabled={busy}
+            onClick={() =>
+              act(`/api/v1/replacements/${out.id}/decision`, { accept: false })
+            }
+          >
+            Reject replacement
+          </button>
+          <button
+            className="primary"
+            disabled={busy}
+            onClick={() =>
+              act(`/api/v1/replacements/${out.id}/decision`, { accept: true })
+            }
+          >
+            Accept replacement
+          </button>
+        </div>
+      )}
+      {canPropose &&
+        (view.candidates?.length ? (
+          <div className="upload-row">
+            <label>
+              Renewed or replacement FDR
+              <select
+                value={choice}
+                disabled={busy}
+                onChange={(e) => setChoice(e.target.value)}
+              >
+                <option value="">Choose a submitted FDR…</option>
+                {view.candidates.map((c) => (
+                  <option key={c.id} value={c.id}>
+                    {c.bank_reference} · {money(c.principal_amount)} · matures{" "}
+                    {day(c.maturity_date)}
+                  </option>
+                ))}
+              </select>
+            </label>
+            <button
+              className="secondary"
+              disabled={busy || !choice}
+              onClick={() =>
+                act(`/api/v1/instruments/${item!.id}/replacement`, {
+                  successor_id: choice,
+                })
+              }
+            >
+              Propose as replacement
+            </button>
+          </div>
+        ) : (
+          <p className="doc-empty">
+            To renew, submit the new FDR first. It must cover the same
+            obligation, mature later and be for at least the same amount.
+          </p>
+        ))}
+      {coverage && (
+        <>
+          <dl className="facts deadline-dates">
+            <div>
+              <dt>Required for {coverage.title}</dt>
+              <dd>{money(coverage.required_amount)}</dd>
+            </div>
+            <div>
+              <dt>Counted cover</dt>
+              <dd>{money(coverage.covered_amount)}</dd>
+            </div>
+            <div>
+              <dt>Gap</dt>
+              <dd>{money(coverage.gap_amount)}</dd>
+            </div>
+          </dl>
+          {coverage.proposed_amount !== "0.00" && (
+            <p className="doc-empty">
+              {money(coverage.proposed_amount)} more is proposed as replacement
+              and is not counted until a reviewer accepts it.
+            </p>
+          )}
+          <ul className="doc-list chain">
+            {chain.map((i) => (
+              <li
+                key={i.id}
+                className={i.state === "counting" ? "" : "replaced"}
+              >
+                <div>
+                  <strong>{i.bank_reference}</strong>
+                  <small>
+                    {money(i.principal_amount)} · matures {day(i.maturity_date)}
+                  </small>
+                </div>
+                <span className={`badge cov-${i.state}`}>
+                  <span />
+                  {coverageStates[i.state]}
+                </span>
+              </li>
+            ))}
+          </ul>
+          <details className="all-cover">
+            <summary>
+              All {coverage.instruments.length} submitted FDRs for this
+              obligation
+            </summary>
+            <ul className="doc-list">
+              {coverage.instruments.map((i) => (
+                <li
+                  key={i.id}
+                  className={i.state === "counting" ? "" : "replaced"}
+                >
+                  <div>
+                    <strong>{i.bank_reference}</strong>
+                    <small>
+                      {money(i.principal_amount)} · matures{" "}
+                      {day(i.maturity_date)}
+                    </small>
+                  </div>
+                  <span className={`badge cov-${i.state}`}>
+                    <span />
+                    {coverageStates[i.state]}
+                  </span>
+                </li>
+              ))}
+            </ul>
+          </details>
+          <p className="muted small">{coverage.basis}</p>
+        </>
+      )}
+    </section>
   );
 }

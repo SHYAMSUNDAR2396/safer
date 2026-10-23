@@ -86,6 +86,7 @@ class Instrument(Base):
         CheckConstraint("status IN ('draft', 'submitted')"),
         CheckConstraint("currency = 'INR'"),
         UniqueConstraint("id", "institution_id"),
+        UniqueConstraint("id", "institution_id", "obligation_id"),
     )
     id: Mapped[UUID] = mapped_column(primary_key=True, default=uuid4)
     institution_id: Mapped[UUID] = mapped_column(ForeignKey("institutions.id"), index=True)
@@ -357,6 +358,37 @@ class Notification(Base):
     delivery_status: Mapped[str] = mapped_column(String(20))
     delivery_detail: Mapped[str] = mapped_column(String(200), default="")
     delivered_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+
+
+class ReplacementLink(Base):
+    """One FDR replacing another for the same institution and obligation (1:1 only)."""
+
+    __tablename__ = "replacement_links"
+    __table_args__ = (
+        ForeignKeyConstraint(
+            ["predecessor_id", "institution_id", "obligation_id"],
+            ["instruments.id", "instruments.institution_id", "instruments.obligation_id"],
+        ),
+        ForeignKeyConstraint(
+            ["successor_id", "institution_id", "obligation_id"],
+            ["instruments.id", "instruments.institution_id", "instruments.obligation_id"],
+        ),
+        CheckConstraint("predecessor_id <> successor_id"),
+        CheckConstraint("status IN ('proposed', 'accepted', 'rejected')"),
+    )
+    id: Mapped[UUID] = mapped_column(primary_key=True, default=uuid4)
+    institution_id: Mapped[UUID]
+    obligation_id: Mapped[UUID]
+    predecessor_id: Mapped[UUID] = mapped_column(index=True)
+    successor_id: Mapped[UUID] = mapped_column(index=True)
+    status: Mapped[str] = mapped_column(String(20), default="proposed")
+    proposed_by: Mapped[UUID] = mapped_column(ForeignKey("users.id"))
+    proposed_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now()
+    )
+    decided_by: Mapped[UUID | None] = mapped_column(ForeignKey("users.id"))
+    decided_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    decision_note: Mapped[str] = mapped_column(String(500), default="")
 
 
 class AuditEvent(Base):

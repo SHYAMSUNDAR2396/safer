@@ -28,6 +28,10 @@ Live OpenAPI: `http://localhost:8000/openapi.json`; interactive docs: `/docs`. S
 | GET | /api/v1/instruments/{id}/deadlines | Maturity, action and obligation dates, schedule version, generated reminders, upcoming steps, escalation owners |
 | GET | /api/v1/notifications | Own in-app notifications (latest 50) and unread count |
 | POST | /api/v1/notifications/{id}/read | Mark own notification read; 204 |
+| GET | /api/v1/instruments/{id}/replacement | Outgoing/incoming link and eligible successors |
+| POST | /api/v1/instruments/{id}/replacement | Body {successor_id}; institution officer proposes; 201 |
+| POST | /api/v1/replacements/{id}/decision | Body {accept, note}; assigned reviewer; 409 once decided |
+| GET | /api/v1/obligations/{id}/coverage | Required, counted, proposed and gap amounts with per-FDR state |
 | GET | /health/live | Process liveness |
 | GET | /health/ready | Database connection readiness |
 

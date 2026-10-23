@@ -21,6 +21,7 @@ from safer.models import (
     Obligation,
     Reminder,
     ReminderSchedule,
+    ReplacementLink,
     ReviewAssignment,
     Submission,
     User,
@@ -50,7 +51,19 @@ def renewal_required(maturity: date, required_until: date | None) -> bool:
     return required_until is None or required_until > maturity
 
 
-def plan(maturity: date, required_until: date | None, schedule) -> list[dict]:
+def replaced(db: Session, ids) -> dict:
+    """Instruments whose renewal action is settled by a proposed or accepted replacement."""
+    return dict(
+        db.execute(
+            select(ReplacementLink.predecessor_id, ReplacementLink.status).where(
+                ReplacementLink.predecessor_id.in_(ids),
+                ReplacementLink.status.in_(("proposed", "accepted")),
+            )
+        ).all()
+    )
+
+
+def plan(maturity: date, required_until: date | None, schedule, settled=False) -> list[dict]:
     steps = [
         {
             "step": f"reminder:{days}",
@@ -61,7 +74,7 @@ def plan(maturity: date, required_until: date | None, schedule) -> list[dict]:
         }
         for days in schedule.offsets_days
     ]
-    if renewal_required(maturity, required_until):
+    if renewal_required(maturity, required_until) and not settled:
         action = maturity - timedelta(days=schedule.action_lead_days)
         steps += [
             {
@@ -96,9 +109,10 @@ def sweep(db: Session, now: datetime | None = None) -> int:
         .join(Submission, Submission.instrument_id == Instrument.id)
         .where(Instrument.status == "submitted", Instrument.maturity_date <= horizon)
     ).all()
+    settled = replaced(db, [item.id for item, _, _ in rows])
     created = 0
     for item, required_until, submitted_at in rows:
-        for step in plan(item.maturity_date, required_until, schedule):
+        for step in plan(item.maturity_date, required_until, schedule, item.id in settled):
             due = due_at(step["day"])
             if due > now:
                 continue
@@ -155,7 +169,8 @@ def deadline_view(db: Session, item: Instrument) -> dict:
     now = db.scalar(select(func.now()))
     schedule = active_schedule(db, now)
     required_until = db.get(Obligation, item.obligation_id).required_until
-    renewal = renewal_required(item.maturity_date, required_until)
+    replacement = replaced(db, [item.id]).get(item.id)
+    renewal = renewal_required(item.maturity_date, required_until) and not replacement
     fired = db.scalars(
         select(Reminder).where(Reminder.instrument_id == item.id).order_by(Reminder.due_at)
     ).all()
@@ -163,7 +178,11 @@ def deadline_view(db: Session, item: Instrument) -> dict:
     sent = deliveries(db, [r.id for r in fired])
     upcoming = [
         {"step": s["step"], "kind": s["kind"], "due_at": due_at(s["day"]).isoformat()}
-        for s in (plan(item.maturity_date, required_until, schedule) if schedule else [])
+        for s in (
+            plan(item.maturity_date, required_until, schedule, bool(replacement))
+            if schedule
+            else []
+        )
         if s["step"] not in done and due_at(s["day"]) > now
     ]
     lead = schedule.action_lead_days if schedule else None
@@ -174,6 +193,7 @@ def deadline_view(db: Session, item: Instrument) -> dict:
         else None,
         "obligation_required_until": required_until.isoformat() if required_until else None,
         "renewal_required": renewal,
+        "replacement_status": replacement,
         "schedule_version": schedule.version if schedule else None,
         "reminders": [
             {

@@ -38,3 +38,5 @@ Migration 008: `jobs` (mutable job state; unique dedup key; partial index on due
 Migration 009: `obligations.required_until`; append-only `reminder_schedules` (version 1 seeded) and `reminders` (unique per instrument and step, schedule version, due/generated times, late flag, message); index on `instruments.maturity_date`.
 
 Migration 010: `users.email`; `notifications` (one row per reminder, recipient and channel, unique), content frozen by trigger while read and delivery state may change.
+
+Migration 011: unique (id, institution_id, obligation_id) on instruments, and `replacement_links` with two composite foreign keys on that triple, a self-link check, partial unique indexes for one live link per side, and a guard trigger allowing only the single decision transition.

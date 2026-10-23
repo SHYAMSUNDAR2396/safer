@@ -150,6 +150,8 @@ export type ReviewCase = {
   discrepancies: Discrepancy[];
   bank_requests: BankExchange[];
   deadlines: Deadlines;
+  replacement: ReplacementView;
+  coverage: Coverage;
   audit: AuditEvent[];
 };
 export type Deadlines = {
@@ -157,6 +159,7 @@ export type Deadlines = {
   action_due_date: string | null;
   obligation_required_until: string | null;
   renewal_required: boolean;
+  replacement_status: "proposed" | "accepted" | null;
   schedule_version: number | null;
   reminders: {
     step: string;
@@ -185,5 +188,44 @@ export type Inbox = {
     body: string;
     created_at: string;
     read: boolean;
+  }[];
+};
+export type ReplacementLink = {
+  id: string;
+  predecessor_id: string;
+  predecessor_reference: string;
+  successor_id: string;
+  successor_reference: string;
+  status: "proposed" | "accepted" | "rejected";
+  proposed_by: string;
+  proposed_at: string;
+  decided_by: string | null;
+  decided_at: string | null;
+  decision_note: string;
+};
+export type ReplacementView = {
+  outgoing: ReplacementLink | null;
+  incoming: ReplacementLink | null;
+  candidates?: {
+    id: string;
+    bank_reference: string;
+    maturity_date: string;
+    principal_amount: string;
+  }[];
+};
+export type Coverage = {
+  obligation_id: string;
+  title: string;
+  required_amount: string;
+  covered_amount: string;
+  proposed_amount: string;
+  gap_amount: string;
+  basis: string;
+  instruments: {
+    id: string;
+    bank_reference: string;
+    principal_amount: string;
+    maturity_date: string;
+    state: "counting" | "superseded" | "proposed_successor";
   }[];
 };

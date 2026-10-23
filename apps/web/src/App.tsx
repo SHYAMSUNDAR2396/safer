@@ -32,11 +32,13 @@ import type {
   Me,
   Obligation,
   Register,
+  Coverage,
   Deadlines,
+  ReplacementView,
   Requirement,
 } from "./types";
 import "./styles.css";
-import { Observations, ReviewWorkspace } from "./Review";
+import { Observations, ReplacementPanel, ReviewWorkspace } from "./Review";
 import {
   events,
   documentStatus,
@@ -439,11 +441,20 @@ function Details({
   const [uploads, setUploads] = useState(0);
   const [missing, setMissing] = useState<string[] | null>(null);
   const [deadlines, setDeadlines] = useState<Deadlines | null>(null);
+  const [replacement, setReplacement] = useState<ReplacementView | null>(null);
+  const [coverage, setCoverage] = useState<Coverage | null>(null);
+  const [links, setLinks] = useState(0);
   useEffect(() => {
     api<Deadlines>(`/api/v1/instruments/${item.id}/deadlines`)
       .then(setDeadlines)
       .catch(() => setDeadlines(null));
-  }, [item.id, item.row_version]);
+    api<ReplacementView>(`/api/v1/instruments/${item.id}/replacement`)
+      .then(setReplacement)
+      .catch(() => setReplacement(null));
+    api<Coverage>(`/api/v1/obligations/${item.obligation_id}/coverage`)
+      .then(setCoverage)
+      .catch(() => setCoverage(null));
+  }, [item.id, item.row_version, links]);
   const key = useRef(crypto.randomUUID());
   useEffect(() => {
     let active = true;
@@ -589,6 +600,19 @@ function Details({
         onRequirements={setMissing}
       />
       {deadlines && <DeadlinesPanel data={deadlines} />}
+      {replacement && item.status === "submitted" && (
+        <ReplacementPanel
+          view={replacement}
+          coverage={coverage}
+          me={me}
+          item={item}
+          focusId={item.id}
+          onChange={() => {
+            setLinks((n) => n + 1);
+            setUploads((n) => n + 1);
+          }}
+        />
+      )}
       {item.status === "submitted" && <Observations id={item.id} me={me} />}
       {confirm && (
         <Dialog
@@ -818,7 +842,7 @@ export default function App() {
           </p>
         </div>
         <div className="sidebar-footer">
-          SAFER <span>v0.8 · Notifications</span>
+          SAFER <span>v0.9 · Replacements</span>
         </div>
       </aside>
       <div className="workspace">

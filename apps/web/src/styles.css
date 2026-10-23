@@ -1524,3 +1524,31 @@ textarea {
   background: #fbeceb;
   color: #a2463e;
 }
+
+.link-line {
+  margin: 10px 0;
+  font-size: 13px;
+}
+.badge.cov-counting {
+  background: #e9f4ed;
+  color: #427b58;
+}
+.badge.cov-superseded {
+  background: #f1f3f2;
+  color: #6f7f7a;
+}
+.badge.cov-proposed_successor {
+  background: #faf3e6;
+  color: #937543;
+}
+
+.all-cover {
+  margin: 4px 0 12px;
+  font-size: 12px;
+}
+.all-cover summary {
+  cursor: pointer;
+  color: #276b59;
+  font-weight: 600;
+  margin-bottom: 8px;
+}
