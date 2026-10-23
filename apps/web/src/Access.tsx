@@ -1,7 +1,7 @@
 import { useEffect, useState, type FormEvent, type ReactNode } from "react";
-import { KeyRound, ShieldCheck, UserCheck } from "lucide-react";
+import { BookCheck, KeyRound, ShieldCheck, UserCheck } from "lucide-react";
 import { api } from "./api";
-import type { Grant, Me } from "./types";
+import type { Grant, Me, PolicyVersion } from "./types";
 import { Notice, refreshedSession } from "./ui";
 
 const authorities = {
@@ -185,6 +185,7 @@ export function AccessWorkspace({ me }: { me: Me }) {
           <p className="doc-empty">Nothing is waiting for approval.</p>
         )}
       </section>
+      <Policies me={me} />
       <section className="panel documents">
         <div className="section-title">
           <KeyRound size={19} />
@@ -428,5 +429,179 @@ export function MyAuthority({ me }: { me: Me }) {
         </>
       )}
     </details>
+  );
+}
+
+export const clearanceLabels: Record<string, string> = {
+  no_dues_certificate: "No-dues certificate",
+  closure_approval_letter: "Closure or approval letter",
+  bank_lien_release: "Bank lien release",
+  audit_confirmation: "Audit confirmation",
+};
+
+function Policies({ me }: { me: Me }) {
+  const [items, setItems] = useState<PolicyVersion[]>([]);
+  const [clearances, setClearances] = useState<string[]>([
+    "no_dues_certificate",
+  ]);
+  const [notBefore, setNotBefore] = useState("obligation_end");
+  const [from, setFrom] = useState(inMonths(1));
+  const [note, setNote] = useState("");
+  const [error, setError] = useState("");
+  const [busy, setBusy] = useState(false);
+  const load = () =>
+    api<{ items: PolicyVersion[] }>("/api/v1/admin/policies")
+      .then((r) => setItems(r.items))
+      .catch((e) => setError(e.message));
+  useEffect(() => {
+    void load();
+  }, []);
+  async function act(path: string, body: unknown) {
+    setBusy(true);
+    setError("");
+    try {
+      await send(me, path, body);
+      await load();
+    } catch (e) {
+      setError((e as Error).message);
+    } finally {
+      setBusy(false);
+    }
+  }
+  return (
+    <section className="panel documents">
+      <div className="section-title">
+        <BookCheck size={19} />
+        <h2>Release policy versions</h2>
+      </div>
+      <p className="muted small">
+        Published versions are immutable; a change is a new version with its own
+        effective date. A different administrator must publish each draft.
+      </p>
+      {error && <Notice message={error} />}
+      <ul className="grants">
+        {items.map((p) => (
+          <li key={p.id} className="grant">
+            <div>
+              <strong>
+                Release policy v{p.version} ·{" "}
+                {p.applies_to === "*" ? "all obligations" : p.applies_to}
+              </strong>
+              <span>
+                From {p.effective_from}
+                {p.effective_until ? ` until ${p.effective_until}` : ""} ·
+                clearances:{" "}
+                {p.rules.clearances.map((c) => clearanceLabels[c]).join(", ")} ·
+                release{" "}
+                {p.rules.release_not_before === "obligation_end"
+                  ? "only after the obligation ends"
+                  : "at any time"}
+              </span>
+              <span>{p.note}</span>
+              <small>
+                Drafted by {p.drafted_by}
+                {p.published_by
+                  ? ` · published by ${p.published_by}`
+                  : ""} ·{" "}
+                {p.owner_validated
+                  ? "validated by policy owner"
+                  : "illustrative · not validated by the policy owner"}
+              </small>
+            </div>
+            <span
+              className={`badge grant-${p.status === "published" ? "active" : "pending"}`}
+            >
+              <span />
+              {p.status === "published" ? "Published" : "Draft"}
+            </span>
+            {p.status === "draft" &&
+              (p.drafted_by === me.display_name ? (
+                <small className="hint">
+                  Another administrator must publish
+                </small>
+              ) : (
+                <button
+                  className="primary"
+                  disabled={busy}
+                  onClick={() =>
+                    act(`/api/v1/admin/policies/${p.id}/publish`, {})
+                  }
+                >
+                  Publish
+                </button>
+              ))}
+          </li>
+        ))}
+      </ul>
+      <details className="all-cover">
+        <summary>Draft a new version</summary>
+        <fieldset disabled={busy} className="policy-form">
+          <legend className="sr-only">Required clearances</legend>
+          {Object.entries(clearanceLabels).map(([value, label]) => (
+            <label key={value} className="check">
+              <input
+                type="checkbox"
+                checked={clearances.includes(value)}
+                onChange={(e) =>
+                  setClearances((old) =>
+                    e.target.checked
+                      ? [...old, value]
+                      : old.filter((c) => c !== value),
+                  )
+                }
+              />
+              {label}
+            </label>
+          ))}
+          <div className="form-grid">
+            <label>
+              Release allowed
+              <select
+                value={notBefore}
+                onChange={(e) => setNotBefore(e.target.value)}
+              >
+                <option value="obligation_end">
+                  Only after the obligation ends
+                </option>
+                <option value="any_time">At any time with clearances</option>
+              </select>
+            </label>
+            <label>
+              Effective from
+              <input
+                type="date"
+                value={from}
+                onChange={(e) => setFrom(e.target.value)}
+              />
+            </label>
+          </div>
+          <label>
+            Note
+            <input
+              value={note}
+              maxLength={300}
+              onChange={(e) => setNote(e.target.value)}
+            />
+          </label>
+          <div className="dialog-actions">
+            <button
+              className="secondary"
+              disabled={busy || !clearances.length || note.trim().length < 3}
+              onClick={() =>
+                act("/api/v1/admin/policies", {
+                  code: "release",
+                  applies_to: "*",
+                  effective_from: from,
+                  rules: { clearances, release_not_before: notBefore },
+                  note,
+                })
+              }
+            >
+              Save draft version
+            </button>
+          </div>
+        </fieldset>
+      </details>
+    </section>
   );
 }

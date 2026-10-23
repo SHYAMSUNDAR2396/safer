@@ -247,3 +247,21 @@ export type Grant = {
   revoked_by: string | null;
   revoke_reason: string;
 };
+export type PolicyVersion = {
+  id: string;
+  policy_id: string;
+  code: "release";
+  version: number;
+  applies_to: string;
+  effective_from: string;
+  effective_until: string | null;
+  rules: {
+    clearances: string[];
+    release_not_before: "obligation_end" | "any_time";
+  };
+  note: string;
+  status: "draft" | "published";
+  owner_validated: boolean;
+  drafted_by: string;
+  published_by: string | null;
+};

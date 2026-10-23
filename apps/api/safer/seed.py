@@ -1,12 +1,13 @@
 """Provision synthetic identities and illustrative obligations; never overwrites existing data."""
 
+from datetime import UTC, date, datetime
 from uuid import UUID
 
 from sqlalchemy import create_engine, select
 from sqlalchemy.orm import Session
 
 from safer.config import Settings
-from safer.models import Grant, Institution, Obligation, User
+from safer.models import Grant, Institution, Obligation, Policy, User
 from safer.storage import client, ensure_bucket
 
 NAMES = ("alpha", "beta", "auditor", "reviewer", "admin1", "admin2", "reviewer2")
@@ -70,6 +71,24 @@ def populate(db: Session, issuer: str):
                 requested_by=UUID("00000000-0000-4000-8000-000000000005"),
                 approved_by=UUID("00000000-0000-4000-8000-000000000005"),
                 reason="Demo portfolio: Alpha Technical Institute",
+            )
+        )
+    if not db.scalar(select(Policy.id).where(Policy.code == "release")):
+        db.add(
+            Policy(
+                code="release",
+                version=1,
+                applies_to="*",
+                effective_from=date(2026, 1, 1),
+                rules={
+                    "clearances": ["no_dues_certificate", "closure_approval_letter"],
+                    "release_not_before": "obligation_end",
+                },
+                note="Illustrative release rules for the demonstration; not AICTE policy",
+                status="published",
+                drafted_by=UUID("00000000-0000-4000-8000-000000000005"),
+                published_by=UUID("00000000-0000-4000-8000-000000000006"),
+                published_at=datetime.now(UTC),
             )
         )
     db.commit()

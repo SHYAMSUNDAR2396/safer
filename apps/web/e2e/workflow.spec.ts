@@ -453,7 +453,14 @@ test("release authority needs a second administrator and grants take effect imme
     page.getByRole("heading", { name: "Authority and delegation" }),
   ).toBeVisible();
   // Grants persist between runs: clear reviewer2's live grants first.
-  await expect(page.locator(".grant").first()).toBeVisible();
+  await expect(
+    page
+      .locator("section", {
+        has: page.getByRole("heading", { name: "All grants" }),
+      })
+      .locator(".grant")
+      .first(),
+  ).toBeVisible();
   const live = page.locator(".grant", { hasText: reviewer2 }).filter({
     has: page.getByRole("button", { name: /Revoke|Withdraw/ }),
   });
@@ -521,4 +528,30 @@ test("release authority needs a second administrator and grants take effect imme
   await signOut(page);
   await login(page, "reviewer2");
   await expect(page.getByText("No cases waiting")).toBeVisible();
+});
+
+test("a policy draft is published only by a second administrator", async ({
+  page,
+}) => {
+  const note = `Policy check ${Date.now()}`;
+  await login(page, "admin1");
+  await page.getByText("Draft a new version").click();
+  await page.getByLabel("Audit confirmation").check();
+  await page.getByLabel("Note", { exact: true }).fill(note);
+  await page.getByRole("button", { name: "Save draft version" }).click();
+  const row = page.locator(".grant", { hasText: note });
+  await expect(row).toContainText("Draft");
+  await expect(row).toContainText("Another administrator must publish");
+  await signOut(page);
+  await login(page, "admin2");
+  await page
+    .locator(".grant", { hasText: note })
+    .getByRole("button", { name: "Publish" })
+    .click();
+  await expect(page.locator(".grant", { hasText: note })).toContainText(
+    "published by Access administrator two",
+  );
+  await expect(page.locator(".grant", { hasText: note })).toContainText(
+    "not validated by the policy owner",
+  );
 });

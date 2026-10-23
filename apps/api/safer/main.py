@@ -21,6 +21,7 @@ from safer.documents import router as documents_router
 from safer.errors import Problem
 from safer.instruments import router as instruments_router
 from safer.notifications import router as notifications_router
+from safer.policies import router as policies_router
 from safer.replacements import router as replacements_router
 from safer.reviews import router as reviews_router
 from safer.storage import client as storage_client
@@ -149,6 +150,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     app.include_router(notifications_router)
     app.include_router(replacements_router)
     app.include_router(authority_router)
+    app.include_router(policies_router)
     return app
 
 

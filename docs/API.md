@@ -37,6 +37,10 @@ Live OpenAPI: `http://localhost:8000/openapi.json`; interactive docs: `/docs`. S
 | POST | /api/v1/admin/grants/{id}/approve, /reject, /revoke | Admin: second-admin approval; reject or withdraw; revoke (cascades to delegations) |
 | GET | /api/v1/grants/mine, /api/v1/grants/delegates | Reviewer: own grants and delegations; possible delegates |
 | POST | /api/v1/grants/{id}/delegate, /api/v1/grants/{id}/revoke | Reviewer: delegate own grant; end a delegation |
+| GET | /api/v1/admin/policies | Admin: all versions |
+| POST | /api/v1/admin/policies | Admin: draft code, applies_to, effective_from/until, rules, note |
+| POST | /api/v1/admin/policies/{id}/publish | A different admin publishes; 409 if already published |
+| GET | /api/v1/obligations/{id}/policy?on=YYYY-MM-DD | Release policy in force for an own obligation |
 | GET | /health/live | Process liveness |
 | GET | /health/ready | Database connection readiness |
 

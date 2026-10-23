@@ -73,6 +73,8 @@ class Obligation(Base):
     )
     # The obligation's own coverage end; None means cover is required until released.
     required_until: Mapped[date | None]
+    # Policy applicability key (e.g. which rule set governs its release).
+    kind: Mapped[str] = mapped_column(String(50), server_default="approval_security_deposit")
 
 
 class Instrument(Base):
@@ -414,6 +416,34 @@ class ReplacementLink(Base):
     decided_by: Mapped[UUID | None] = mapped_column(ForeignKey("users.id"))
     decided_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
     decision_note: Mapped[str] = mapped_column(String(500), default="")
+
+
+class Policy(Base):
+    """A versioned rule set. Content is frozen at drafting; publishing is the only change."""
+
+    __tablename__ = "policies"
+    __table_args__ = (
+        UniqueConstraint("code", "version"),
+        CheckConstraint("code IN ('release')"),
+        CheckConstraint("status IN ('draft', 'published')"),
+        CheckConstraint("effective_until IS NULL OR effective_until > effective_from"),
+        CheckConstraint("published_by IS DISTINCT FROM drafted_by"),
+    )
+    id: Mapped[UUID] = mapped_column(primary_key=True, default=uuid4)
+    code: Mapped[str] = mapped_column(String(30))
+    version: Mapped[int]
+    applies_to: Mapped[str] = mapped_column(String(50))
+    effective_from: Mapped[date]
+    effective_until: Mapped[date | None]
+    rules: Mapped[dict] = mapped_column(JSONB)
+    note: Mapped[str] = mapped_column(String(300))
+    status: Mapped[str] = mapped_column(String(20), default="draft")
+    # Set only by the organisation's policy owner; every demo policy is illustrative.
+    owner_validated: Mapped[bool] = mapped_column(Boolean, default=False)
+    drafted_by: Mapped[UUID] = mapped_column(ForeignKey("users.id"))
+    published_by: Mapped[UUID | None] = mapped_column(ForeignKey("users.id"))
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+    published_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
 
 
 class AuditEvent(Base):

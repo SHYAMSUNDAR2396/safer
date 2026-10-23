@@ -1471,6 +1471,159 @@
           }
         }
       }
+    },
+    "/api/v1/admin/policies": {
+      "get": {
+        "summary": "All Policies",
+        "operationId": "all_policies_api_v1_admin_policies_get",
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "summary": "Draft",
+        "operationId": "draft_api_v1_admin_policies_post",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/PolicyInput"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/admin/policies/{id}/publish": {
+      "post": {
+        "summary": "Publish",
+        "operationId": "publish_api_v1_admin_policies__id__publish_post",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Id"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/EmptyInput"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/api/v1/obligations/{id}/policy": {
+      "get": {
+        "summary": "Applicable",
+        "operationId": "applicable_api_v1_obligations__id__policy_get",
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "format": "uuid",
+              "title": "Id"
+            }
+          },
+          {
+            "name": "on",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "anyOf": [
+                {
+                  "type": "string",
+                  "format": "date"
+                },
+                {
+                  "type": "null"
+                }
+              ],
+              "title": "On"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "Successful Response",
+            "content": {
+              "application/json": {
+                "schema": {}
+              }
+            }
+          },
+          "422": {
+            "description": "Validation Error",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/HTTPValidationError"
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "components": {
@@ -1821,6 +1974,56 @@
         ],
         "title": "InstrumentView"
       },
+      "PolicyInput": {
+        "properties": {
+          "code": {
+            "type": "string",
+            "const": "release",
+            "title": "Code"
+          },
+          "applies_to": {
+            "type": "string",
+            "pattern": "^(\\*|[a-z_]{3,50})$",
+            "title": "Applies To"
+          },
+          "effective_from": {
+            "type": "string",
+            "format": "date",
+            "title": "Effective From"
+          },
+          "effective_until": {
+            "anyOf": [
+              {
+                "type": "string",
+                "format": "date"
+              },
+              {
+                "type": "null"
+              }
+            ],
+            "title": "Effective Until"
+          },
+          "rules": {
+            "$ref": "#/components/schemas/ReleaseRules"
+          },
+          "note": {
+            "type": "string",
+            "maxLength": 300,
+            "minLength": 3,
+            "title": "Note"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "code",
+          "applies_to",
+          "effective_from",
+          "rules",
+          "note"
+        ],
+        "title": "PolicyInput"
+      },
       "ProposalInput": {
         "properties": {
           "successor_id": {
@@ -1835,6 +2038,39 @@
           "successor_id"
         ],
         "title": "ProposalInput"
+      },
+      "ReleaseRules": {
+        "properties": {
+          "clearances": {
+            "items": {
+              "type": "string",
+              "enum": [
+                "no_dues_certificate",
+                "closure_approval_letter",
+                "bank_lien_release",
+                "audit_confirmation"
+              ]
+            },
+            "type": "array",
+            "minItems": 1,
+            "title": "Clearances"
+          },
+          "release_not_before": {
+            "type": "string",
+            "enum": [
+              "obligation_end",
+              "any_time"
+            ],
+            "title": "Release Not Before"
+          }
+        },
+        "additionalProperties": false,
+        "type": "object",
+        "required": [
+          "clearances",
+          "release_not_before"
+        ],
+        "title": "ReleaseRules"
       },
       "ReplyInput": {
         "properties": {

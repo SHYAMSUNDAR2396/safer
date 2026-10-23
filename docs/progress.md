@@ -93,3 +93,7 @@ M3 (SAF-013–016) complete locally.
 ## M4 / SAF-017 — 23 October 2026
 
 Ruling: grants replace review assignments (migrated), because expiry, revocation, delegation and dual control are properties of authority, not of a role column. Admins are a separate role that never holds case authority.
+
+## M4 / SAF-018 — 23 October 2026
+
+Ruling: one policy code (`release`) with a strict rules schema rather than a generic rules engine; new codes get their own schema when a decision needs them.

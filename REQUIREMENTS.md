@@ -1,4 +1,4 @@
-# Implemented scope: M1 / SAF-001–007, M2 / SAF-008–012, M3 / SAF-013–016, M4 / SAF-017
+# Implemented scope: M1 / SAF-001–007, M2 / SAF-008–012, M3 / SAF-013–016, M4 / SAF-017–018
 
 Source: ../docs/design/NIDHISETU-REQUIREMENTS-ARCHITECTURE-v2.md and ../docs/SAFER-IMPLEMENTATION-BACKLOG.md. Later branding is SAFER.
 
@@ -135,3 +135,15 @@ Only assigned reviewers decide; history is immutable apart from the single propo
 | Delegation | Holders delegate within their own expiry; no re-delegation; delegated release authority needs admin approval; revoking a grant revokes its delegations |
 
 Grant rows are append-only apart from the allowed transitions (pending → active/rejected, active → revoked/expired), enforced by trigger. New demo users: `admin1`, `admin2` (access administrators) and `reviewer2`. Case-level separation (e.g. the evidence reviewer cannot approve the same release) belongs to SAF-019.
+
+## SAF-018 — versioned policies
+
+| Requirement | Delivered |
+|---|---|
+| Versioned policies | `policies` (code `release`, version per code); a change is a new version |
+| Applicability and effective dates | `applies_to` an obligation kind or `*`, `effective_from`/`effective_until`; resolution picks the published version in force on a date, kind-specific before general |
+| Approved publication | Draft by one admin, publish by a different admin (API rule and `published_by IS DISTINCT FROM drafted_by`); published rows immutable by trigger |
+| Owner validation before real decisions | `owner_validated` is false for every demo policy and shown as "illustrative · not validated by the policy owner"; there is no API to set it, because that is an organisational governance step (SAF-032) |
+| Past decision snapshots | `policies.snapshot()` gives id, version, rules and validation state for decisions to copy (used by SAF-019) |
+
+Release rules schema: required clearances (no-dues certificate, closure/approval letter, bank lien release, audit confirmation) and whether release may happen only after the obligation ends. Seed publishes an illustrative release policy v1. Document requirements and the reminder schedule remain separately versioned/configured.
