@@ -1,7 +1,7 @@
 export type Me = {
   id: string;
   display_name: string;
-  role: "institution_user" | "auditor" | "reviewer";
+  role: "institution_user" | "auditor" | "reviewer" | "admin";
   institution: { id: string; name: string };
   csrf_token: string;
   demo: boolean;
@@ -228,4 +228,22 @@ export type Coverage = {
     maturity_date: string;
     state: "counting" | "superseded" | "proposed_successor";
   }[];
+};
+export type Grant = {
+  id: string;
+  user_id: string;
+  user: string;
+  authority: "review" | "release_approve";
+  institution: { id: string; name: string };
+  status: "pending" | "active" | "rejected" | "revoked" | "expired";
+  effective: boolean;
+  valid_from: string;
+  valid_until: string | null;
+  requested_by: string | null;
+  approved_by: string | null;
+  delegated_from: string | null;
+  reason: string;
+  created_at: string;
+  revoked_by: string | null;
+  revoke_reason: string;
 };

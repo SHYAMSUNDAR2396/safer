@@ -39,6 +39,7 @@ import type {
 } from "./types";
 import "./styles.css";
 import { Observations, ReplacementPanel, ReviewWorkspace } from "./Review";
+import { AccessWorkspace } from "./Access";
 import {
   events,
   documentStatus,
@@ -691,7 +692,7 @@ export default function App() {
     }
   }
   useEffect(() => {
-    if (me && me.role !== "reviewer") {
+    if (me && me.role !== "reviewer" && me.role !== "admin") {
       void load();
       api<{ items: Obligation[] }>("/api/v1/obligations")
         .then((r) => setObligations(r.items))
@@ -826,7 +827,11 @@ export default function App() {
             }}
           >
             <Files size={19} />
-            {me.role === "reviewer" ? "Review queue" : "Deposit register"}
+            {me.role === "reviewer"
+              ? "Review queue"
+              : me.role === "admin"
+                ? "Access management"
+                : "Deposit register"}
             <ChevronRight size={16} />
           </button>
           <button className="nav-item" onClick={() => setGuide(true)}>
@@ -842,7 +847,7 @@ export default function App() {
           </p>
         </div>
         <div className="sidebar-footer">
-          SAFER <span>v0.9 · Replacements</span>
+          SAFER <span>v1.0 · Scoped authority</span>
         </div>
       </aside>
       <div className="workspace">
@@ -861,7 +866,9 @@ export default function App() {
                   ? "Read-only access"
                   : me.role === "reviewer"
                     ? "AICTE reviewer"
-                    : "Institution officer"}
+                    : me.role === "admin"
+                      ? "Access administrator"
+                      : "Institution officer"}
               </small>
             </div>
             <button
@@ -883,7 +890,9 @@ export default function App() {
         </div>
         <main className="main" id="main-content">
           {selected && error && <Notice message={error} />}{" "}
-          {me.role === "reviewer" ? (
+          {me.role === "admin" ? (
+            <AccessWorkspace me={me} />
+          ) : me.role === "reviewer" ? (
             <ReviewWorkspace me={me} />
           ) : selected ? (
             <Details

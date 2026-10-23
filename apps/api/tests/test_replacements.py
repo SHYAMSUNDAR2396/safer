@@ -3,8 +3,8 @@ from datetime import date, timedelta
 
 import pytest
 from safer import deadlines, replacements
-from safer.models import Instrument, Obligation, Reminder, ReplacementLink, ReviewAssignment
-from sqlalchemy import delete, select, text
+from safer.models import Grant, Instrument, Obligation, Reminder, ReplacementLink
+from sqlalchemy import func, select, text, update
 from sqlalchemy.exc import DBAPIError
 from test_deadlines import at
 from test_instruments import payload
@@ -158,7 +158,7 @@ def test_only_assigned_reviewers_decide(clients, actors, db):
     link = propose(
         alpha, fdr(alpha, actors, "OLD-7"), fdr(alpha, actors, "NEW-7", maturity="2028-10-01")
     ).json()
-    db.execute(delete(ReviewAssignment))
+    db.execute(update(Grant).values(status="revoked", revoked_at=func.now()))
     db.commit()
     assert decide(reviewer, link["id"]).status_code == 404
 

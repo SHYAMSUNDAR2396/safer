@@ -40,3 +40,5 @@ Migration 009: `obligations.required_until`; append-only `reminder_schedules` (v
 Migration 010: `users.email`; `notifications` (one row per reminder, recipient and channel, unique), content frozen by trigger while read and delivery state may change.
 
 Migration 011: unique (id, institution_id, obligation_id) on instruments, and `replacement_links` with two composite foreign keys on that triple, a self-link check, partial unique indexes for one live link per side, and a guard trigger allowing only the single decision transition.
+
+Migration 012: role `admin`; `grants` with checks for no self-grant/self-approval and dual control on release_approve, a partial unique index for one live grant per (user, authority, institution), and a guard trigger for allowed transitions; `review_assignments` migrated into active review grants and dropped.

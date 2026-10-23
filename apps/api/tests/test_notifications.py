@@ -6,8 +6,8 @@ import pytest
 from pydantic import ValidationError
 from safer import deadlines, jobs
 from safer.config import Settings
-from safer.models import Job, Notification, ReviewAssignment, User
-from sqlalchemy import delete, select, text, update
+from safer.models import Grant, Job, Notification, User
+from sqlalchemy import func, select, text, update
 from sqlalchemy.exc import DBAPIError
 from test_deadlines import at, submitted
 
@@ -52,7 +52,7 @@ def test_reminders_notify_only_in_scope_recipients(clients, actors, db):
 def test_inactive_and_unassigned_people_are_not_notified(clients, actors, db):
     submitted(clients(), actors, date.today() + timedelta(days=10))
     db.execute(update(User).where(User.subject == "alpha").values(active=False))
-    db.execute(delete(ReviewAssignment))
+    db.execute(update(Grant).values(status="revoked", revoked_at=func.now()))
     db.commit()
     deadlines.sweep(db, at(date.today(), 1))
     assert db.scalars(select(Notification)).all() == []

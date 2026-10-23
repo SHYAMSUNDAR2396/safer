@@ -19,3 +19,5 @@ SAF-012: simulator answers are HMAC-signed with a key derived from the local ses
 SAF-013: the broker requires a generated password and binds to loopback; Celery accepts JSON only, messages carry only a job id, and job payloads are validated against a per-kind schema before any handler runs. Unknown kinds or invalid payloads end as dead without executing.
 
 SAF-015: notifications are visible only to their recipient; recipients are resolved from institution membership and reviewer assignment at generation time. Email goes only to the loopback capture server; settings reject any other host or mode. Email bodies contain the reminder text, FDR reference and bank name; treat captured mail as confidential.
+
+SAF-017: authority is data with expiry, revocation and provenance rather than a role flag. Dual control and no-self-grant rules are database constraints, so a bug in the API cannot bypass them. Revocation takes effect on the next request because every scope check queries active grants. Admin sessions use the same OIDC, CSRF and expiry controls; production needs MFA for administrators (SAF-027).

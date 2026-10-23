@@ -13,6 +13,7 @@ import {
   Scale,
 } from "lucide-react";
 import { api, day, money } from "./api";
+import { MyAuthority } from "./Access";
 import type {
   BankExchange,
   CaseField,
@@ -757,10 +758,12 @@ export function ReviewWorkspace({ me }: { me: Me }) {
           <p className="eyebrow">REVIEW QUEUE</p>
           <h1>Cases awaiting review</h1>
           <p className="muted">
-            Submitted FDRs from institutions assigned to you, oldest first.
+            Submitted FDRs from institutions you hold review authority for,
+            oldest first.
           </p>
         </div>
       </div>
+      <MyAuthority me={me} />
       <div className="stats">
         <div className="stat">
           <span>

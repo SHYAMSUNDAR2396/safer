@@ -2,12 +2,14 @@
 
 from uuid import UUID
 
-from sqlalchemy import create_engine
+from sqlalchemy import create_engine, select
 from sqlalchemy.orm import Session
 
 from safer.config import Settings
-from safer.models import Institution, Obligation, ReviewAssignment, User
+from safer.models import Grant, Institution, Obligation, User
 from safer.storage import client, ensure_bucket
+
+NAMES = ("alpha", "beta", "auditor", "reviewer", "admin1", "admin2", "reviewer2")
 
 
 def populate(db: Session, issuer: str):
@@ -34,14 +36,15 @@ def populate(db: Session, issuer: str):
         (2, "Beta institution officer", 200, "institution_user"),
         (3, "Alpha read-only auditor", 100, "auditor"),
         (4, "Regulation Bureau reviewer", 300, "reviewer"),
+        (5, "Access administrator one", 300, "admin"),
+        (6, "Access administrator two", 300, "admin"),
+        (7, "Second Bureau reviewer", 300, "reviewer"),
     ]:
         subject = f"00000000-0000-4000-8000-{suffix:012d}"
         id = UUID(subject)
         existing = db.get(User, id)
         if existing and not existing.email:  # additive: earlier seeds had no addresses
-            existing.email = (
-                f"{('alpha', 'beta', 'auditor', 'reviewer')[suffix - 1]}@example.invalid"
-            )
+            existing.email = f"{NAMES[suffix - 1]}@example.invalid"
         if not existing:
             db.add(
                 User(
@@ -49,7 +52,7 @@ def populate(db: Session, issuer: str):
                     issuer=issuer,
                     subject=subject,
                     display_name=name,
-                    email=f"{('alpha', 'beta', 'auditor', 'reviewer')[suffix - 1]}@example.invalid",
+                    email=f"{NAMES[suffix - 1]}@example.invalid",
                     institution_id=UUID(int=institution),
                     role=role,
                 )
@@ -57,8 +60,18 @@ def populate(db: Session, issuer: str):
     db.flush()
     # The demo reviewer covers Alpha only, so Beta's cases demonstrate the scope boundary.
     reviewer, alpha = UUID("00000000-0000-4000-8000-000000000004"), UUID(int=100)
-    if not db.get(ReviewAssignment, (reviewer, alpha)):
-        db.add(ReviewAssignment(reviewer_id=reviewer, institution_id=alpha))
+    if not db.scalar(select(Grant.id).where(Grant.user_id == reviewer)):
+        db.add(
+            Grant(
+                user_id=reviewer,
+                authority="review",
+                institution_id=alpha,
+                status="active",
+                requested_by=UUID("00000000-0000-4000-8000-000000000005"),
+                approved_by=UUID("00000000-0000-4000-8000-000000000005"),
+                reason="Demo portfolio: Alpha Technical Institute",
+            )
+        )
     db.commit()
 
 

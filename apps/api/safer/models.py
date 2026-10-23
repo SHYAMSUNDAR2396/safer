@@ -32,7 +32,7 @@ class User(Base):
     __tablename__ = "users"
     __table_args__ = (
         UniqueConstraint("issuer", "subject"),
-        CheckConstraint("role IN ('institution_user', 'auditor', 'reviewer')"),
+        CheckConstraint("role IN ('institution_user', 'auditor', 'reviewer', 'admin')"),
     )
     id: Mapped[UUID] = mapped_column(primary_key=True, default=uuid4)
     issuer: Mapped[str] = mapped_column(String(300))
@@ -163,12 +163,37 @@ class DocumentScan(Base):
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
 
 
-class ReviewAssignment(Base):
-    """A reviewer's portfolio: they see submitted cases of these institutions only."""
+class Grant(Base):
+    """Scoped, time-limited authority. Sensitive grants need a second admin (enforced in DB)."""
 
-    __tablename__ = "review_assignments"
-    reviewer_id: Mapped[UUID] = mapped_column(ForeignKey("users.id"), primary_key=True)
-    institution_id: Mapped[UUID] = mapped_column(ForeignKey("institutions.id"), primary_key=True)
+    __tablename__ = "grants"
+    __table_args__ = (
+        CheckConstraint("authority IN ('review', 'release_approve')"),
+        CheckConstraint("status IN ('pending', 'active', 'rejected', 'revoked', 'expired')"),
+        CheckConstraint("requested_by IS DISTINCT FROM user_id"),
+        CheckConstraint("approved_by IS DISTINCT FROM user_id"),
+        CheckConstraint(
+            "authority <> 'release_approve' OR status IN ('pending', 'rejected')"
+            " OR (approved_by IS NOT NULL AND approved_by IS DISTINCT FROM requested_by)",
+            name="dual_control",
+        ),
+    )
+    id: Mapped[UUID] = mapped_column(primary_key=True, default=uuid4)
+    user_id: Mapped[UUID] = mapped_column(ForeignKey("users.id"), index=True)
+    authority: Mapped[str] = mapped_column(String(30))
+    institution_id: Mapped[UUID] = mapped_column(ForeignKey("institutions.id"), index=True)
+    status: Mapped[str] = mapped_column(String(20), default="pending")
+    valid_from: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+    valid_until: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    requested_by: Mapped[UUID | None] = mapped_column(ForeignKey("users.id"))
+    approved_by: Mapped[UUID | None] = mapped_column(ForeignKey("users.id"))
+    delegated_from: Mapped[UUID | None] = mapped_column(ForeignKey("grants.id"))
+    reason: Mapped[str] = mapped_column(String(300))
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+    decided_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    revoked_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    revoked_by: Mapped[UUID | None] = mapped_column(ForeignKey("users.id"))
+    revoke_reason: Mapped[str] = mapped_column(String(300), default="")
 
 
 FIELDS = "'bank_name', 'bank_reference', 'principal_amount', 'issue_date', 'maturity_date'"

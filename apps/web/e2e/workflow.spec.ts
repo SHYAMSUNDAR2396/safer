@@ -443,3 +443,82 @@ test("renewed FDR replaces the old one only after reviewer acceptance", async ({
     fullPage: true,
   });
 });
+
+test("release authority needs a second administrator and grants take effect immediately", async ({
+  page,
+}) => {
+  const reviewer2 = "Second Bureau reviewer";
+  await login(page, "admin1");
+  await expect(
+    page.getByRole("heading", { name: "Authority and delegation" }),
+  ).toBeVisible();
+  // Grants persist between runs: clear reviewer2's live grants first.
+  await expect(page.locator(".grant").first()).toBeVisible();
+  const live = page.locator(".grant", { hasText: reviewer2 }).filter({
+    has: page.getByRole("button", { name: /Revoke|Withdraw/ }),
+  });
+  while ((await live.count()) > 0) {
+    const before = await live.count();
+    await live
+      .first()
+      .getByRole("button", { name: /Revoke|Withdraw/ })
+      .click();
+    await expect(live).toHaveCount(before - 1);
+  }
+  const form = page.locator("form");
+  await form.getByLabel("Reviewer").selectOption({ label: reviewer2 });
+  await form.getByLabel("Authority").selectOption("release_approve");
+  await form
+    .getByLabel("Institution")
+    .selectOption({ label: "Alpha Technical Institute" });
+  await form.getByLabel("Reason").fill("Release cover for Alpha");
+  await page
+    .getByRole("button", { name: "Request (needs second approval)" })
+    .click();
+  const pendingRow = page
+    .locator(".grant", { hasText: "Release cover for Alpha" })
+    .first();
+  await expect(pendingRow).toContainText("Awaiting second administrator");
+  await expect(pendingRow).toContainText("Another administrator must approve");
+  await form.getByLabel("Authority").selectOption("review");
+  await form.getByLabel("Reason").fill("Review cover for Alpha");
+  await page.getByRole("button", { name: "Grant authority" }).click();
+  await expect(
+    page.locator(".grant", { hasText: "Review cover for Alpha" }).first(),
+  ).toContainText("Active");
+  await signOut(page);
+
+  await login(page, "admin2");
+  await page
+    .locator(".grant", { hasText: "Release cover for Alpha" })
+    .first()
+    .getByRole("button", { name: "Approve" })
+    .click();
+  await expect(
+    page.locator(".grant", { hasText: "Release cover for Alpha" }).first(),
+  ).toContainText("approved by Access administrator two");
+  await page.screenshot({
+    path: "test-results/access.png",
+    fullPage: true,
+  });
+  await signOut(page);
+
+  await login(page, "reviewer2");
+  await expect(
+    page.getByRole("heading", { name: "Cases awaiting review" }),
+  ).toBeVisible();
+  await expect(
+    page.getByRole("button", { name: /^REVIEW-/ }).first(),
+  ).toBeVisible();
+  await signOut(page);
+
+  await login(page, "admin1");
+  await page
+    .locator(".grant", { hasText: "Review cover for Alpha" })
+    .first()
+    .getByRole("button", { name: "Revoke" })
+    .click();
+  await signOut(page);
+  await login(page, "reviewer2");
+  await expect(page.getByText("No cases waiting")).toBeVisible();
+});

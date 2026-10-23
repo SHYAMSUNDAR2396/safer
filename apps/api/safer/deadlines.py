@@ -14,15 +14,16 @@ from sqlalchemy import func, select
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.orm import Session
 
+from safer.authority import active
 from safer.instruments import scoped_instrument
 from safer.models import (
     AuditEvent,
+    Grant,
     Instrument,
     Obligation,
     Reminder,
     ReminderSchedule,
     ReplacementLink,
-    ReviewAssignment,
     Submission,
     User,
 )
@@ -158,8 +159,8 @@ def reviewers_for(db: Session, institution_id: UUID) -> list[str]:
     return list(
         db.scalars(
             select(User.display_name)
-            .join(ReviewAssignment, ReviewAssignment.reviewer_id == User.id)
-            .where(ReviewAssignment.institution_id == institution_id, User.active.is_(True))
+            .join(Grant, Grant.user_id == User.id)
+            .where(Grant.institution_id == institution_id, active("review"), User.active.is_(True))
             .order_by(User.display_name)
         )
     )

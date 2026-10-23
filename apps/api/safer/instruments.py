@@ -5,12 +5,13 @@ from uuid import UUID
 from fastapi import APIRouter, Header, Query, Request, Response
 from sqlalchemy import func, or_, select, tuple_
 
+from safer.authority import active
 from safer.errors import Problem
 from safer.models import (
     AuditEvent,
+    Grant,
     Instrument,
     Obligation,
-    ReviewAssignment,
     Submission,
     User,
 )
@@ -51,14 +52,15 @@ def scoped_instrument(db, user, id: UUID, lock=False):
 
 
 def assigned_case(db, user, id: UUID):
-    """A submitted instrument of an institution assigned to this reviewer, else 404."""
+    """A submitted instrument of an institution this reviewer has active authority over, else 404."""
     item = db.scalar(
         select(Instrument)
-        .join(ReviewAssignment, ReviewAssignment.institution_id == Instrument.institution_id)
+        .join(Grant, Grant.institution_id == Instrument.institution_id)
         .where(
             Instrument.id == id,
             Instrument.status == "submitted",
-            ReviewAssignment.reviewer_id == user.id,
+            Grant.user_id == user.id,
+            active("review"),
         )
     )
     if not item:

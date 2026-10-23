@@ -32,6 +32,11 @@ Live OpenAPI: `http://localhost:8000/openapi.json`; interactive docs: `/docs`. S
 | POST | /api/v1/instruments/{id}/replacement | Body {successor_id}; institution officer proposes; 201 |
 | POST | /api/v1/replacements/{id}/decision | Body {accept, note}; assigned reviewer; 409 once decided |
 | GET | /api/v1/obligations/{id}/coverage | Required, counted, proposed and gap amounts with per-FDR state |
+| GET | /api/v1/admin/users, /api/v1/admin/grants | Admin: people, organisations and grant history |
+| POST | /api/v1/admin/grants | Admin: user_id, authority, institution_id, valid_until, reason; review active at once, release_approve pending |
+| POST | /api/v1/admin/grants/{id}/approve, /reject, /revoke | Admin: second-admin approval; reject or withdraw; revoke (cascades to delegations) |
+| GET | /api/v1/grants/mine, /api/v1/grants/delegates | Reviewer: own grants and delegations; possible delegates |
+| POST | /api/v1/grants/{id}/delegate, /api/v1/grants/{id}/revoke | Reviewer: delegate own grant; end a delegation |
 | GET | /health/live | Process liveness |
 | GET | /health/ready | Database connection readiness |
 

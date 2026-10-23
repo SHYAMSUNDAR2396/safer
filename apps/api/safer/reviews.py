@@ -4,6 +4,7 @@ from uuid import UUID
 from fastapi import APIRouter, Request
 from sqlalchemy import select
 
+from safer.authority import active
 from safer.deadlines import deadline_view
 from safer.documents import document_view, instrument_documents
 from safer.errors import Problem
@@ -14,11 +15,11 @@ from safer.models import (
     Discrepancy,
     DiscrepancyReply,
     EvidenceRecord,
+    Grant,
     Institution,
     Instrument,
     Obligation,
     Reminder,
-    ReviewAssignment,
     Submission,
     User,
 )
@@ -164,10 +165,10 @@ def queue(user: Reviewer, db: DB):
     # ponytail: oldest 200 waiting cases only; add keyset pagination with the dashboard (SAF-021).
     rows = db.execute(
         select(Instrument, Institution, Submission)
-        .join(ReviewAssignment, ReviewAssignment.institution_id == Instrument.institution_id)
+        .join(Grant, Grant.institution_id == Instrument.institution_id)
         .join(Institution, Institution.id == Instrument.institution_id)
         .join(Submission, Submission.instrument_id == Instrument.id)
-        .where(ReviewAssignment.reviewer_id == user.id, Instrument.status == "submitted")
+        .where(Grant.user_id == user.id, active("review"), Instrument.status == "submitted")
         .order_by(Submission.created_at, Instrument.id)
         .limit(200)
     ).all()

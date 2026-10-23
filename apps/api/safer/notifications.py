@@ -16,8 +16,9 @@ from sqlalchemy import func, select
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.orm import Session
 
+from safer.authority import active
 from safer.errors import Problem
-from safer.models import Notification, ReviewAssignment, User
+from safer.models import Grant, Notification, User
 from safer.security import DB, Actor
 
 router = APIRouter(prefix="/api/v1")
@@ -32,8 +33,8 @@ def recipients(db: Session, institution_id: UUID, owner_role: str) -> list[User]
     if owner_role == "reviewer":
         query = (
             select(User)
-            .join(ReviewAssignment, ReviewAssignment.reviewer_id == User.id)
-            .where(ReviewAssignment.institution_id == institution_id)
+            .join(Grant, Grant.user_id == User.id)
+            .where(Grant.institution_id == institution_id, active("review"))
         )
     else:  # institution officers act on reminders; auditors are read-only observers
         query = select(User).where(

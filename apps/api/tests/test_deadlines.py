@@ -2,8 +2,8 @@ from datetime import date, datetime, timedelta
 
 import pytest
 from safer import deadlines
-from safer.models import Obligation, Reminder, ReminderSchedule, ReviewAssignment
-from sqlalchemy import delete, func, select, text
+from safer.models import Grant, Obligation, Reminder, ReminderSchedule
+from sqlalchemy import func, select, text, update
 from sqlalchemy.exc import DBAPIError
 from test_instruments import payload
 
@@ -95,7 +95,7 @@ def test_unresolved_action_escalates_to_the_assigned_reviewer(clients, actors, d
     assert reviewer.get("/api/v1/reviews").json()["items"][0]["escalated"] is True
     view = clients().get(f"/api/v1/instruments/{item['id']}/deadlines").json()
     assert view["escalation_owners"] == ["reviewer"]
-    db.execute(delete(ReviewAssignment))
+    db.execute(update(Grant).values(status="revoked", revoked_at=func.now()))
     db.commit()
     view = clients().get(f"/api/v1/instruments/{item['id']}/deadlines").json()
     assert view["escalation_owners"] == [], "unowned escalations are visible, not hidden"

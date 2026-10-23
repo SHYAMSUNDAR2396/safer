@@ -1,4 +1,4 @@
-# Implemented scope: M1 / SAF-001–007, M2 / SAF-008–012, M3 / SAF-013–016
+# Implemented scope: M1 / SAF-001–007, M2 / SAF-008–012, M3 / SAF-013–016, M4 / SAF-017
 
 Source: ../docs/design/NIDHISETU-REQUIREMENTS-ARCHITECTURE-v2.md and ../docs/SAFER-IMPLEMENTATION-BACKLOG.md. Later branding is SAFER.
 
@@ -123,3 +123,15 @@ Observation and review events do not notify yet; only reminders do.
 | Partial/split deferred | A successor below the predecessor's amount is refused with `partial_replacement` |
 
 Only assigned reviewers decide; history is immutable apart from the single proposed → accepted/rejected transition; both FDRs' audit trails record proposal and decision. Coverage is computed from submitted claims and labelled as such: it is not independently confirmed coverage.
+
+## SAF-017 — scoped authority and delegation (FR10, SR02)
+
+| Requirement | Delivered |
+|---|---|
+| Scoped authority with expiry and revocation | `grants` (review or release_approve, per institution, valid until ≤ 1 year); every reviewer scope check (queue, case, downloads, reminders, notifications) uses active, unexpired grants; revocation is immediate; review assignments were migrated into grants |
+| Dual control for sensitive grants | release_approve stays pending until a second admin approves; requester and grantee cannot approve; a database check (`dual_control`) rejects any active release grant approved by its requester |
+| Actor-level separation | Admins manage but never hold authority; only reviewers hold it; no authority over one's own organisation; requester ≠ approver ≠ grantee |
+| No admin self-escalation | Self-grants refused in the API and by `requested_by/approved_by IS DISTINCT FROM user_id` checks |
+| Delegation | Holders delegate within their own expiry; no re-delegation; delegated release authority needs admin approval; revoking a grant revokes its delegations |
+
+Grant rows are append-only apart from the allowed transitions (pending → active/rejected, active → revoked/expired), enforced by trigger. New demo users: `admin1`, `admin2` (access administrators) and `reviewer2`. Case-level separation (e.g. the evidence reviewer cannot approve the same release) belongs to SAF-019.

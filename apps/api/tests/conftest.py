@@ -8,7 +8,7 @@ from dotenv import dotenv_values
 from fastapi.testclient import TestClient
 from safer.config import Settings
 from safer.main import create_app
-from safer.models import Institution, Obligation, ReviewAssignment, SessionRow, User
+from safer.models import Grant, Institution, Obligation, SessionRow, User
 from sqlalchemy import create_engine, text
 from sqlalchemy.orm import Session
 
@@ -29,7 +29,7 @@ def db(settings):
     with engine.begin() as conn:
         conn.execute(
             text(
-                "TRUNCATE institutions, users, sessions, obligations, instruments, submissions, documents, document_scans, review_assignments, evidence_records, discrepancies, discrepancy_replies, bank_requests, bank_responses, jobs, job_attempts, reminders, reminder_schedules, notifications, replacement_links, audit_events CASCADE"
+                "TRUNCATE institutions, users, sessions, obligations, instruments, submissions, documents, document_scans, grants, evidence_records, discrepancies, discrepancy_replies, bank_requests, bank_responses, jobs, job_attempts, reminders, reminder_schedules, notifications, replacement_links, audit_events CASCADE"
             )
         )
         # The migration's default schedule, restored because tests may add versions.
@@ -81,6 +81,9 @@ def actors(db, settings):
             ("beta", b, "institution_user"),
             ("auditor", a, "auditor"),
             ("reviewer", regulator, "reviewer"),
+            ("admin1", regulator, "admin"),
+            ("admin2", regulator, "admin"),
+            ("reviewer2", regulator, "reviewer"),
         ]
     ]
     obligations = [
@@ -95,13 +98,24 @@ def actors(db, settings):
     ]
     db.add_all(users + obligations)
     db.flush()
-    db.add(ReviewAssignment(reviewer_id=users[3].id, institution_id=a.id))
+    db.add(
+        Grant(
+            user_id=users[3].id,
+            authority="review",
+            institution_id=a.id,
+            status="active",
+            reason="Test portfolio",
+        )
+    )
     db.commit()
     return {
         "alpha": users[0],
         "beta": users[1],
         "auditor": users[2],
         "reviewer": users[3],
+        "admin1": users[4],
+        "admin2": users[5],
+        "reviewer2": users[6],
         "obligations": obligations,
     }
 

@@ -1,8 +1,8 @@
 import pytest
 from safer import bank
 from safer.errors import Problem
-from safer.models import BankRequest, EvidenceRecord, Instrument, ReviewAssignment
-from sqlalchemy import delete, func, select, text
+from safer.models import BankRequest, EvidenceRecord, Grant, Instrument
+from sqlalchemy import func, select, text, update
 from sqlalchemy.exc import DBAPIError
 from test_instruments import payload
 
@@ -117,7 +117,7 @@ def test_only_assigned_reviewers_can_ask_the_simulator(clients, actors, db):
     alpha, reviewer = clients(), clients("reviewer")
     item = submitted(alpha, actors)
     assert request(alpha, item).status_code == 403
-    db.execute(delete(ReviewAssignment))
+    db.execute(update(Grant).values(status="revoked", revoked_at=func.now()))
     db.commit()
     assert request(reviewer, item).status_code == 404
     assert db.scalar(select(func.count()).select_from(BankRequest)) == 0

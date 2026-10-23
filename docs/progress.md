@@ -89,3 +89,7 @@ Ruling: Mailpit v1.31.3 captures email locally. Handlers now receive `final` on 
 Ruling: coverage counts submitted claims (labelled as such) because accepted-evidence coverage depends on the release lifecycle (M4). A proposal, not only an acceptance, settles the institution's renewal action; the reviewer's decision is then the open item.
 
 M3 (SAF-013–016) complete locally.
+
+## M4 / SAF-017 — 23 October 2026
+
+Ruling: grants replace review assignments (migrated), because expiry, revocation, delegation and dual control are properties of authority, not of a role column. Admins are a separate role that never holds case authority.

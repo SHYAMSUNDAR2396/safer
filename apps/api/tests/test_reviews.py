@@ -3,8 +3,8 @@ from datetime import UTC, datetime, timedelta
 
 import pytest
 from safer import scanning
-from safer.models import EvidenceRecord, ReviewAssignment
-from sqlalchemy import delete, func, select, text
+from safer.models import EvidenceRecord, Grant
+from sqlalchemy import func, select, text, update
 from sqlalchemy.exc import DBAPIError
 from test_documents import pdf, upload
 from test_instruments import draft, payload
@@ -122,7 +122,7 @@ def test_only_assigned_reviewers_record_evidence(clients, actors, db):
     case = submitted(alpha, actors)
     url = f"/api/v1/reviews/{case['id']}/evidence"
     assert alpha.post(url, json=evidence()).status_code == 403
-    db.execute(delete(ReviewAssignment))
+    db.execute(update(Grant).values(status="revoked", revoked_at=func.now()))
     db.commit()
     assert reviewer.post(url, json=evidence()).status_code == 404
     assert reviewer.get("/api/v1/reviews").json()["items"] == []
@@ -208,6 +208,6 @@ def test_assigned_reviewer_can_download_clean_case_documents(clients, actors, db
     assert [d["id"] for d in case["documents"]] == [doc["id"]]
     url = f"/api/v1/documents/{doc['id']}/download"
     assert reviewer.get(url).status_code == 200
-    db.execute(delete(ReviewAssignment))
+    db.execute(update(Grant).values(status="revoked", revoked_at=func.now()))
     db.commit()
     assert reviewer.get(url).status_code == 404

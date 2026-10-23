@@ -13,6 +13,7 @@ from sqlalchemy.exc import SQLAlchemyError
 from starlette.middleware.sessions import SessionMiddleware
 
 from safer.auth import router as auth_router
+from safer.authority import router as authority_router
 from safer.bank import router as bank_router
 from safer.config import Settings
 from safer.deadlines import router as deadlines_router
@@ -147,6 +148,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     app.include_router(deadlines_router)
     app.include_router(notifications_router)
     app.include_router(replacements_router)
+    app.include_router(authority_router)
     return app
 
 
