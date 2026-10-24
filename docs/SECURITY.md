@@ -25,3 +25,5 @@ SAF-017: authority is data with expiry, revocation and provenance rather than a 
 SAF-019: release decisions require explicit release authority (SAF-017), separation from clearance work, and a current basis fingerprint; approvals become void on material change. The portal records decisions only; it cannot move money.
 
 SAF-020: execution is evidenced, not performed: SAFER records instructions and independent bank execution evidence and reconciles them; it has no payment capability. Recording execution is separated from approving and instructing.
+
+SAF-022: exports follow OWASP CSV-injection guidance (quote all, neutralise formula prefixes) and are bearer-free: there are no signed links; every download goes through the authenticated, re-authorising endpoint.

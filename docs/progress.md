@@ -111,3 +111,7 @@ M4 (SAF-017–020) complete locally.
 ## M5 / SAF-021 — 24 October 2026
 
 Ruling: metrics are declared once as SQL conditions; the total and the drill-down run the same query. The dashboard replaced the older ad hoc stat tiles on the register and review queue. Dataviz skill guidance applied (stat tiles, meter, reserved status colour with icon and label, table view).
+
+## M5 / SAF-022 — 24 October 2026
+
+Ruling: no signed URLs; downloads always pass through the API so re-authorisation is real. Export scope is fixed at build and must still hold at download.

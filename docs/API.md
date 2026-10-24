@@ -52,6 +52,8 @@ Live OpenAPI: `http://localhost:8000/openapi.json`; interactive docs: `/docs`. S
 | POST | /api/v1/release-requests/{id}/close | Reviewer: needs valid approval and matched reconciliation; FDR becomes closed |
 | GET | /api/v1/dashboard | Scoped metrics (key, group, label, grain, count, amount) and per-obligation cover |
 | GET | /api/v1/dashboard/{key} | The FDRs a metric counts |
+| POST | /api/v1/exports | Body {metric}: a dashboard list visible to you; 202 queued |
+| GET | /api/v1/exports, /api/v1/exports/{id}/download | Own exports; download rechecks owner, scope, expiry (410) and integrity |
 | GET | /health/live | Process liveness |
 | GET | /health/ready | Database connection readiness |
 

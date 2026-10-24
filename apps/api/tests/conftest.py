@@ -29,7 +29,7 @@ def db(settings):
     with engine.begin() as conn:
         conn.execute(
             text(
-                "TRUNCATE institutions, users, sessions, obligations, instruments, submissions, documents, document_scans, grants, evidence_records, discrepancies, discrepancy_replies, bank_requests, bank_responses, jobs, job_attempts, reminders, reminder_schedules, notifications, replacement_links, policies, release_requests, release_clearances, release_events, release_instructions, release_executions, audit_events CASCADE"
+                "TRUNCATE institutions, users, sessions, obligations, instruments, submissions, documents, document_scans, grants, evidence_records, discrepancies, discrepancy_replies, bank_requests, bank_responses, jobs, job_attempts, reminders, reminder_schedules, notifications, replacement_links, policies, release_requests, release_clearances, release_events, release_instructions, release_executions, exports, audit_events CASCADE"
             )
         )
         # The migration's default schedule, restored because tests may add versions.

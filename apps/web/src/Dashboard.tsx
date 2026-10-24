@@ -2,7 +2,8 @@ import { useEffect, useState } from "react";
 import { AlertTriangle, ChevronRight } from "lucide-react";
 import { api, day, money } from "./api";
 import type { Coverage } from "./types";
-import { Dialog, Notice } from "./ui";
+import { Dialog, Notice, refreshedSession } from "./ui";
+import type { Me } from "./types";
 
 type Metric = {
   key: string;
@@ -72,7 +73,68 @@ function CoverMeter({ c }: { c: DashboardData["coverage"][number] }) {
   );
 }
 
-export function Overview({ onOpen }: { onOpen: (id: string) => void }) {
+type ExportState = { id: string; status: string; error: string };
+
+function ExportButton({ me, metric }: { me: Me; metric: string }) {
+  const [job, setJob] = useState<ExportState | null>(null);
+  const [error, setError] = useState("");
+  useEffect(() => {
+    if (!job || job.status !== "queued") return;
+    const timer = setTimeout(async () => {
+      const r = await api<{ items: ExportState[] }>("/api/v1/exports");
+      setJob(r.items.find((e) => e.id === job.id) ?? job);
+    }, 1500);
+    return () => clearTimeout(timer);
+  }, [job]);
+  async function start() {
+    setError("");
+    try {
+      const current = await refreshedSession(me);
+      setJob(
+        await api<ExportState>(
+          "/api/v1/exports",
+          { method: "POST", body: JSON.stringify({ metric }) },
+          current.csrf_token,
+        ),
+      );
+    } catch (e) {
+      setError((e as Error).message);
+    }
+  }
+  return (
+    <div className="export-row">
+      {error && <Notice message={error} />}
+      {!job && (
+        <button className="secondary" onClick={start}>
+          Export as CSV
+        </button>
+      )}
+      {job?.status === "queued" && <span role="status">Preparing export…</span>}
+      {job?.status === "ready" && (
+        <a
+          className="primary"
+          href={`/api/v1/exports/${job.id}/download`}
+          download
+        >
+          Download CSV
+        </a>
+      )}
+      {job?.status === "failed" && <Notice message={job.error} />}
+      <small>
+        Built in the background for you only; the file expires after one hour
+        and is rechecked against your access when downloaded.
+      </small>
+    </div>
+  );
+}
+
+export function Overview({
+  me,
+  onOpen,
+}: {
+  me: Me;
+  onOpen: (id: string) => void;
+}) {
   const [data, setData] = useState<DashboardData | null>(null);
   const [drill, setDrill] = useState<Drill | null>(null);
   const [error, setError] = useState("");
@@ -182,6 +244,7 @@ export function Overview({ onOpen }: { onOpen: (id: string) => void }) {
           ) : (
             <p className="doc-empty">Nothing here.</p>
           )}
+          <ExportButton key={drill.key} me={me} metric={drill.key} />
         </Dialog>
       )}
     </section>

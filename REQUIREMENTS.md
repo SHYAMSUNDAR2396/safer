@@ -1,4 +1,4 @@
-# Implemented scope: M1 / SAF-001–007, M2 / SAF-008–012, M3 / SAF-013–016, M4 / SAF-017–020, M5 / SAF-021
+# Implemented scope: M1 / SAF-001–007, M2 / SAF-008–012, M3 / SAF-013–016, M4 / SAF-017–020, M5 / SAF-021–022
 
 Source: ../docs/design/NIDHISETU-REQUIREMENTS-ARCHITECTURE-v2.md and ../docs/SAFER-IMPLEMENTATION-BACKLOG.md. Later branding is SAFER.
 
@@ -183,3 +183,14 @@ Approval is an administrative decision only. Execution evidence and reconciliati
 | Totals reconcile | Portfolio buckets sum to the register's count and recorded amount on a known fixture; settled actions leave the queue |
 
 Tiles flag non-zero attention items with an icon and label, never colour alone; cover uses a meter with `role="meter"`; the drill-down is a table.
+
+## SAF-022 — protected exports (FR12)
+
+| Requirement | Delivered |
+|---|---|
+| Asynchronous | `POST /exports` queues an outbox job carrying only the export id; the worker builds the CSV |
+| Reauthorise at execution | The job reloads the owner, requires an active account and recomputes scope from current grants; no authority → failed, nothing stored; the scope used is recorded on the export |
+| Reauthorise at delivery | Owner only (others 404); account still active; current scope must still include every institution in the file (403 otherwise); hash re-checked |
+| Safe CSV cells | Every cell quoted; cells starting with `= + - @` tab or CR are prefixed with `'`; stored data is unchanged |
+| Expiring protected artifact | Private storage, one-hour expiry (410 after), purged by the relay every minute |
+| No cross-institution leakage | Scope recomputed per owner at build time; no shared cache; responses are no-store; duplicate job delivery builds once |

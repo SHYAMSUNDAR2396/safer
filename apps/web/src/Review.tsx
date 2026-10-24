@@ -797,7 +797,7 @@ export function ReviewWorkspace({ me }: { me: Me }) {
       </div>
       <MyAuthority me={me} />
       <ReleaseDecisions me={me} />
-      <Overview onOpen={setOpen} />
+      <Overview me={me} onOpen={setOpen} />
       <section className="panel register">
         <div className="register-heading">
           <div>

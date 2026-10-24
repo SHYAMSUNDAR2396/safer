@@ -12,6 +12,7 @@ from sqlalchemy import (
     Numeric,
     String,
     UniqueConstraint,
+    Uuid,
     func,
 )
 from sqlalchemy.dialects.postgresql import ARRAY, JSONB
@@ -533,6 +534,27 @@ class ReleaseEvent(Base):
     note: Mapped[str] = mapped_column(String(500), default="")
     basis: Mapped[str | None] = mapped_column(String(64))
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+
+
+class Export(Base):
+    """A CSV built asynchronously for one owner; scope is fixed when built, rechecked on download."""
+
+    __tablename__ = "exports"
+    __table_args__ = (CheckConstraint("status IN ('queued', 'ready', 'failed')"),)
+    id: Mapped[UUID] = mapped_column(primary_key=True, default=uuid4)
+    user_id: Mapped[UUID] = mapped_column(ForeignKey("users.id"), index=True)
+    metric: Mapped[str] = mapped_column(String(40))
+    status: Mapped[str] = mapped_column(String(20), default="queued")
+    institution_ids: Mapped[list[UUID]] = mapped_column(ARRAY(Uuid), default=list)
+    row_count: Mapped[int | None]
+    object_key: Mapped[str | None] = mapped_column(String(200))
+    object_version: Mapped[str | None] = mapped_column(String(200))
+    sha256: Mapped[str | None] = mapped_column(String(64))
+    error: Mapped[str] = mapped_column(String(200), default="")
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+    ready_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    expires_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
+    purged_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
 
 
 class AuditEvent(Base):

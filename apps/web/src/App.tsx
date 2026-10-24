@@ -928,7 +928,7 @@ export default function App() {
                   </button>
                 )}
               </div>
-              <Overview onOpen={open} />
+              <Overview me={me} onOpen={open} />
               <section className="panel register">
                 <div className="register-heading">
                   <div>

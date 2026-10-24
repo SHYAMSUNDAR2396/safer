@@ -110,3 +110,8 @@ CI workflow repeats build, lint, migrations, API tests and browser tests using e
 
 - API suite: **205 passed** (7 new): lifecycle buckets reconcile to a known fixture and to the register summary; attention metrics follow their definitions before and after a sweep; a proposed replacement removes an FDR from renewal-action-due; every metric's drill-down has exactly its count and amount; unknown metric 404; scope by institution and authority (reviewer sees Alpha only, no drafts; revoked grants see nothing; beta sees only Beta); per-obligation cover; release work queues move through clearing, ready and awaiting instruction.
 - Playwright: **12 passed**; new scenario: a tile's count equals its drill-down rows and opening a row opens that record; reviewer sees release work and no drafts. Screenshot reviewed: flagged tiles use icon plus label, meter separates proposed from counted cover.
+
+## Recorded results — SAF-022, 24 October 2026
+
+- API suite: **214 passed** (9 new): asynchronous build matching the dashboard drill-down, attachment CSV and audit trail; formula-prefixed cells neutralised (stored data unchanged); grant revoked before the job runs → failed with nothing stored; grant revoked after build → download 403; expiry → 410 and purge deletes all stored versions; owner-only access (beta and auditor 404, beta's export excludes Alpha); only visible metrics (unknown 422, reviewer drafts 422, admins 403); duplicate delivery builds once; deactivated owner gets nothing.
+- Playwright: **12 passed**; the dashboard scenario now exports a drill-down through the real relay and Celery worker and checks the downloaded CSV's row count equals the tile.

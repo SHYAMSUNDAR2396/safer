@@ -19,7 +19,7 @@ from sqlalchemy import func, or_, select, update
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.orm import Session
 
-from safer import notifications, scanning
+from safer import exports, notifications, scanning
 from safer.models import Job, JobAttempt
 
 # All job timestamps use the database clock: host and container clocks can drift apart.
@@ -51,6 +51,7 @@ def scan_handler(db: Session, ctx: Context, payload: ScanPayload, final: bool):
 HANDLERS = {
     "scan_document": (ScanPayload, scan_handler),
     "send_email": (notifications.EmailPayload, notifications.send_email),
+    "build_export": (exports.ExportPayload, exports.build),
 }
 
 
@@ -208,13 +209,13 @@ if __name__ == "__main__":
     # Relay: publish due jobs and reclaim stalled ones. Run alongside `celery -A safer.worker worker`.
     from sqlalchemy import create_engine
 
+    from safer import deadlines
     from safer.config import Settings
+    from safer.storage import client
 
     settings = Settings()
     engine = create_engine(settings.database_url.get_secret_value(), hide_parameters=True)
-    from safer import deadlines
-
-    publish = celery_publish(configure(settings))
+    publish, s3 = celery_publish(configure(settings)), client(settings)
     swept = 0.0
     while True:
         with Session(engine, expire_on_commit=False) as session:
@@ -222,6 +223,7 @@ if __name__ == "__main__":
             reminders = 0
             if time.monotonic() - swept >= 60:  # well inside the 15-minute due-work target
                 reminders, swept = deadlines.sweep(session), time.monotonic()
+                exports.purge(session, s3, settings)
         if sent or stalled or reminders:
             print(
                 json.dumps({"published": sent, "stalled": stalled, "reminders": reminders}),

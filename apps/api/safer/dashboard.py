@@ -209,32 +209,36 @@ def dashboard(user: Actor, db: DB):
     }
 
 
-@router.get("/dashboard/{key}")
-def drill(key: str, user: Actor, db: DB):
+def drill_rows(db: Session, user, key: str, ids=None) -> tuple[str, list[dict]] | None:
+    """The FDRs a metric counts, or None if the metric is not visible to this user."""
     found = next((d for d in visible(user) if d[0] == key), None)
     if not found:
-        raise Problem(404, "not_found", "Unknown metric.")
+        return None
     # ponytail: unpaginated drill-down; add keyset pagination when portfolios grow past ~1k rows.
     rows = db.execute(
-        base(scope(db, user), found[3])
+        base(scope(db, user) if ids is None else ids, found[3])
         .add_columns(Institution.name)
         .join(Institution, Institution.id == Instrument.institution_id)
         .order_by(Instrument.maturity_date, Instrument.id)
     ).all()
-    return {
-        "key": key,
-        "label": found[2],
-        "grain": GRAIN,
-        "items": [
-            {
-                "id": str(i.id),
-                "bank_reference": i.bank_reference,
-                "bank_name": i.bank_name,
-                "institution": name,
-                "principal_amount": f"{i.principal_amount:.2f}",
-                "maturity_date": i.maturity_date.isoformat(),
-                "status": i.status,
-            }
-            for i, name in rows
-        ],
-    }
+    return found[2], [
+        {
+            "id": str(i.id),
+            "bank_reference": i.bank_reference,
+            "bank_name": i.bank_name,
+            "institution": name,
+            "principal_amount": f"{i.principal_amount:.2f}",
+            "maturity_date": i.maturity_date.isoformat(),
+            "status": i.status,
+        }
+        for i, name in rows
+    ]
+
+
+@router.get("/dashboard/{key}")
+def drill(key: str, user: Actor, db: DB):
+    result = drill_rows(db, user, key)
+    if not result:
+        raise Problem(404, "not_found", "Unknown metric.")
+    label, items = result
+    return {"key": key, "label": label, "grain": GRAIN, "items": items}

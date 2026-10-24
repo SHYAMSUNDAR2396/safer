@@ -1808,3 +1808,16 @@ label.check input {
   margin-top: 6px;
   color: #8a9994;
 }
+
+.export-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 12px;
+  margin-top: 16px;
+}
+.export-row small {
+  flex-basis: 100%;
+  color: #8a9994;
+  font-size: 11px;
+}

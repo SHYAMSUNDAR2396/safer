@@ -719,6 +719,15 @@ test("dashboard tiles drill down to exactly the FDRs they count", async ({
   const dialog = page.getByRole("dialog");
   await expect(dialog).toContainText(`${count} FDRs`);
   await expect(dialog.locator("tbody tr")).toHaveCount(count);
+  await dialog.getByRole("button", { name: "Export as CSV" }).click();
+  const link = dialog.getByRole("link", { name: "Download CSV" });
+  await expect(link).toBeVisible({ timeout: 20000 });
+  const downloading = page.waitForEvent("download");
+  await link.click();
+  const csvText = readFileSync(await (await downloading).path(), "utf8");
+  const lines = csvText.trim().split("\n");
+  expect(lines[0]).toContain('"FDR reference"');
+  expect(lines.length - 1).toBe(count);
   const first = await dialog.locator("tbody tr td").first().innerText();
   await dialog
     .getByRole("button", { name: /^Open / })

@@ -20,6 +20,7 @@ from safer.dashboard import router as dashboard_router
 from safer.deadlines import router as deadlines_router
 from safer.documents import router as documents_router
 from safer.errors import Problem
+from safer.exports import router as exports_router
 from safer.instruments import router as instruments_router
 from safer.notifications import router as notifications_router
 from safer.policies import router as policies_router
@@ -155,6 +156,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     app.include_router(policies_router)
     app.include_router(releases_router)
     app.include_router(dashboard_router)
+    app.include_router(exports_router)
     return app
 
 
