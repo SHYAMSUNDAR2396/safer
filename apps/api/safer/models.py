@@ -557,6 +557,42 @@ class Export(Base):
     purged_at: Mapped[datetime | None] = mapped_column(DateTime(timezone=True))
 
 
+class ExtractionRun(Base):
+    """One run of one extractor version over one clean document version. Proposals only."""
+
+    __tablename__ = "extraction_runs"
+    __table_args__ = (
+        UniqueConstraint("document_id", "extractor"),
+        CheckConstraint("status IN ('completed', 'manual_required', 'failed')"),
+    )
+    id: Mapped[UUID] = mapped_column(primary_key=True, default=uuid4)
+    document_id: Mapped[UUID] = mapped_column(ForeignKey("documents.id"), index=True)
+    extractor: Mapped[str] = mapped_column(String(40))
+    status: Mapped[str] = mapped_column(String(20))
+    text_layer: Mapped[bool]
+    error: Mapped[str] = mapped_column(String(200), default="")
+    created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
+
+
+class ExtractedField(Base):
+    __tablename__ = "extracted_fields"
+    __table_args__ = (
+        UniqueConstraint("run_id", "field"),
+        CheckConstraint("status IN ('proposed', 'abstained')"),
+        CheckConstraint("status = 'abstained' OR value IS NOT NULL"),
+    )
+    id: Mapped[UUID] = mapped_column(primary_key=True, default=uuid4)
+    run_id: Mapped[UUID] = mapped_column(ForeignKey("extraction_runs.id"), index=True)
+    field: Mapped[str] = mapped_column(String(30))
+    status: Mapped[str] = mapped_column(String(20))
+    value: Mapped[str | None] = mapped_column(String(120))
+    reason: Mapped[str] = mapped_column(String(200), default="")
+    page: Mapped[int | None]
+    x: Mapped[float | None]
+    y: Mapped[float | None]
+    snippet: Mapped[str] = mapped_column(String(300), default="")
+
+
 class AuditEvent(Base):
     __tablename__ = "audit_events"
     id: Mapped[UUID] = mapped_column(primary_key=True, default=uuid4)

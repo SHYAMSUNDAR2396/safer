@@ -8,6 +8,7 @@ from safer.authority import active
 from safer.deadlines import deadline_view
 from safer.documents import document_view, instrument_documents
 from safer.errors import Problem
+from safer.extraction import proposed_values
 from safer.instruments import assigned_case, audit_items, scoped_instrument
 from safer.models import (
     BankRequest,
@@ -46,8 +47,11 @@ def same(field: str, claimed: str, confirmed: str) -> bool:
     return claimed == confirmed  # references keep leading zeros and exact characters
 
 
-def comparison(snapshot: dict, records) -> list[dict]:
-    """Claim vs latest independent evidence per field; code decides, never a model."""
+def comparison(snapshot: dict, records, extracted: dict | None = None) -> list[dict]:
+    """Claim vs latest independent evidence per field; code decides, never a model.
+
+    `extracted` values come from the institution's own document: shown for comparison only."""
+    extracted = extracted or {}
     latest = {r.field: r for r in sorted(records, key=lambda r: (r.created_at, r.id))}
     rows = []
     for field, label in FIELDS.items():
@@ -63,6 +67,9 @@ def comparison(snapshot: dict, records) -> list[dict]:
                 "confirmed": record.value if record else None,
                 "status": status,
                 "simulated": bool(record and record.method == "bank_simulator"),
+                "extracted": extracted.get(field),
+                "extracted_differs": field in extracted
+                and not same(field, claimed, extracted[field]),
                 "evidence_id": str(record.id) if record else None,
             }
         )
@@ -232,7 +239,11 @@ def case(id: UUID, user: Reviewer, db: DB):
         "institution": {"id": str(institution.id), "name": institution.name},
         "submitted_at": sub.created_at.isoformat(),
         "claim": {field: sub.snapshot[field] for field in FIELDS},
-        "comparison": comparison(sub.snapshot, records),
+        "comparison": comparison(
+            sub.snapshot,
+            records,
+            proposed_values(db, [d.id for d in docs if d.id in current and d.kind != "other"]),
+        ),
         "evidence": evidence_views(db, records),
         "documents": [document_view(d, states[d.id], d.id in current) for d in docs],
         "submitted_documents": sub.snapshot.get("documents", []),

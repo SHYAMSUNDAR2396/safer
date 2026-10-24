@@ -19,7 +19,7 @@ from sqlalchemy import func, or_, select, update
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.orm import Session
 
-from safer import exports, notifications, scanning
+from safer import exports, extraction, notifications, scanning
 from safer.models import Job, JobAttempt
 
 # All job timestamps use the database clock: host and container clocks can drift apart.
@@ -52,6 +52,7 @@ HANDLERS = {
     "scan_document": (ScanPayload, scan_handler),
     "send_email": (notifications.EmailPayload, notifications.send_email),
     "build_export": (exports.ExportPayload, exports.build),
+    "extract_document": (extraction.ExtractPayload, extraction.run),
 }
 
 

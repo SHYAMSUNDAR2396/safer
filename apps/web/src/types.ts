@@ -95,6 +95,8 @@ export type Comparison = {
   confirmed: string | null;
   status: "match" | "mismatch" | "unconfirmed";
   simulated: boolean;
+  extracted: string | null;
+  extracted_differs: boolean;
 };
 export type BankExchange = {
   id: string;

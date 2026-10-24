@@ -54,6 +54,7 @@ Live OpenAPI: `http://localhost:8000/openapi.json`; interactive docs: `/docs`. S
 | GET | /api/v1/dashboard/{key} | The FDRs a metric counts |
 | POST | /api/v1/exports | Body {metric}: a dashboard list visible to you; 202 queued |
 | GET | /api/v1/exports, /api/v1/exports/{id}/download | Own exports; download rechecks owner, scope, expiry (410) and integrity |
+| GET | /api/v1/documents/{id}/extraction | Proposals for a clean document: status, extractor, fields with value or abstention reason, page, position, snippet; 409 if not clean |
 | GET | /health/live | Process liveness |
 | GET | /health/ready | Database connection readiness |
 
@@ -76,3 +77,5 @@ Review case views include `deadlines`; queue rows include `escalated`.
 Deadline reminders include `deliveries`: per-recipient email status (pending, sent, failed, uncertain) and detail.
 
 Release views now include `instruction`, `executions` and `reconciliation`. Instrument status may be `closed`. Review case views include the FDR `status` and remain readable after closure.
+
+Review comparison rows include `extracted` and `extracted_differs` (from the institution's current required documents; informational, not evidence).

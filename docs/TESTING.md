@@ -115,3 +115,8 @@ CI workflow repeats build, lint, migrations, API tests and browser tests using e
 
 - API suite: **214 passed** (9 new): asynchronous build matching the dashboard drill-down, attachment CSV and audit trail; formula-prefixed cells neutralised (stored data unchanged); grant revoked before the job runs → failed with nothing stored; grant revoked after build → download 403; expiry → 410 and purge deletes all stored versions; owner-only access (beta and auditor 404, beta's export excludes Alpha); only visible metrics (unknown 422, reviewer drafts 422, admins 403); duplicate delivery builds once; deactivated owner gets nothing.
 - Playwright: **12 passed**; the dashboard scenario now exports a drill-down through the real relay and Celery worker and checks the downloaded CSV's row count equals the tile.
+
+## Recorded results — SAF-023, 24 October 2026
+
+- API suite: **222 passed** (8 new): positioned proposals from a real text-layer PDF; ambiguous and missing fields abstain; an impossible date abstains instead of guessing; images fall back to manual entry; unscanned documents are never parsed (409); access inherits the document (beta 404, auditor allowed, reviewer only on reviewable cases); proposals never change the claim or create evidence, and reviewers see a differing extracted value flagged; unreadable text layer fails safely.
+- Playwright: **13 passed**; new scenario: a draft with a wrong amount, a real receipt upload, the clean scan and extraction jobs, proposals shown with page and source line, values applied through the edit form, and the amount changing only after Save. Screenshot review fixed field labels breaking onto separate lines.

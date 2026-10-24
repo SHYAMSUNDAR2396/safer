@@ -1342,7 +1342,7 @@ label input::placeholder {
   overflow-wrap: anywhere;
 }
 .thread.open {
-  border-left: 3px solid #c56b61;
+  border-color: #c56b61;
 }
 .thread-head {
   display: flex;
@@ -1438,10 +1438,10 @@ textarea {
   }
 }
 .reminder.escalation {
-  border-left: 3px solid #c56b61;
+  border-color: #c56b61;
 }
 .reminder.action_due {
-  border-left: 3px solid #b9852f;
+  border-color: #b9852f;
 }
 .reminder strong svg {
   vertical-align: -2px;
@@ -1651,11 +1651,11 @@ label.check input {
   font-size: 13px;
 }
 .release-card.approved {
-  border-left: 3px solid #4a8261;
+  border-color: #4a8261;
 }
 .release-card.approval_invalidated,
 .release-card.rejected {
-  border-left: 3px solid #c56b61;
+  border-color: #c56b61;
 }
 .release-card .requirements li {
   justify-content: space-between;
@@ -1704,7 +1704,7 @@ label.check input {
   color: #a2463e;
 }
 .release-card.closed {
-  border-left: 3px solid #4a8261;
+  border-color: #4a8261;
 }
 .badge.release-closed {
   background: #e9f4ed;
@@ -1820,4 +1820,32 @@ label.check input {
   flex-basis: 100%;
   color: #8a9994;
   font-size: 11px;
+}
+
+.doc-list li {
+  flex-wrap: wrap;
+}
+.doc-values {
+  flex-basis: 100%;
+  margin: 4px 0 0 30px;
+  font-size: 12px;
+}
+.doc-values summary {
+  cursor: pointer;
+  color: #276b59;
+  font-weight: 600;
+}
+.doc-values .requirements {
+  margin: 8px 0;
+}
+.differs {
+  color: #a2463e;
+  font-weight: 600;
+}
+.doc-values strong {
+  display: inline;
+  font-size: 12px;
+}
+.doc-values .requirements li {
+  padding: 2px 0;
 }

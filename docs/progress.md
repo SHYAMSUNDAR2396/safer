@@ -115,3 +115,9 @@ Ruling: metrics are declared once as SQL conditions; the total and the drill-dow
 ## M5 / SAF-022 — 24 October 2026
 
 Ruling: no signed URLs; downloads always pass through the API so re-authorisation is real. Export scope is fixed at build and must still hold at download.
+
+## M5 / SAF-023 — 24 October 2026
+
+Ruling: deterministic text-first extraction instead of an AI model: the backlog asks for text-first extraction with abstention, which fixed rules meet without sending data to a provider. OCR stays unconfigured; scanned images need manual entry. Applying values reuses the normal edit form, so acceptance is the officer's save.
+
+Also: design-hook review replaced thick coloured side stripes on cards with tinted outlines (every card already carries a text status).

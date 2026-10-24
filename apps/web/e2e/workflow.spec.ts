@@ -22,6 +22,29 @@ function minimalPdf() {
     .join("")}trailer\n<< /Size 4 /Root 1 0 R >>\nstartxref\n${xref}\n%%EOF\n`;
   return Buffer.from(body, "latin1");
 }
+function receiptPdf(lines: string[]) {
+  const stream = lines
+    .map((l, i) => `BT /F1 11 Tf 72 ${760 - 18 * i} Td (${l}) Tj ET\n`)
+    .join("");
+  const objects = [
+    "<< /Type /Catalog /Pages 2 0 R >>",
+    "<< /Type /Pages /Kids [3 0 R] /Count 1 >>",
+    "<< /Type /Page /Parent 2 0 R /MediaBox [0 0 612 792] /Contents 4 0 R /Resources << /Font << /F1 5 0 R >> >> >>",
+    `<< /Length ${stream.length} >>\nstream\n${stream}endstream`,
+    "<< /Type /Font /Subtype /Type1 /BaseFont /Helvetica >>",
+  ];
+  let body = "%PDF-1.4\n";
+  const offsets = objects.map((o, i) => {
+    const at = body.length;
+    body += `${i + 1} 0 obj\n${o}\nendobj\n`;
+    return at;
+  });
+  const xref = body.length;
+  body += `xref\n0 6\n0000000000 65535 f \n${offsets
+    .map((o) => `${String(o).padStart(10, "0")} 00000 n \n`)
+    .join("")}trailer\n<< /Size 6 /Root 1 0 R >>\nstartxref\n${xref}\n%%EOF\n`;
+  return Buffer.from(body, "latin1");
+}
 async function login(page: Page, name: string) {
   const u = users.find((x) => x.username === name)!;
   await page.goto("/");
@@ -742,4 +765,55 @@ test("dashboard tiles drill down to exactly the FDRs they count", async ({
     page.getByRole("heading", { name: "Release work" }),
   ).toBeVisible();
   await expect(page.getByRole("button", { name: /^Drafts:/ })).toHaveCount(0);
+});
+
+test("values read from a receipt are applied only after the officer saves", async ({
+  page,
+}) => {
+  const ref = `OCR-${Date.now()}`;
+  await login(page, "alpha");
+  await page.getByRole("button", { name: "New FDR" }).click();
+  await page.getByLabel("Bank name").fill("Demo National Bank");
+  await page.getByLabel("FDR reference").fill(ref);
+  await page.getByLabel("Principal amount (INR)").fill("1000.00");
+  await page.getByLabel("Issue date").fill("2026-10-01");
+  await page.getByLabel("Maturity date").fill("2027-10-01");
+  await page.getByRole("button", { name: "Save draft" }).click();
+  await page.getByLabel("Upload document").setInputFiles({
+    name: "receipt.pdf",
+    mimeType: "application/pdf",
+    buffer: receiptPdf([
+      "Demo National Bank",
+      `FDR No: ${ref}`,
+      "Deposit Amount: Rs. 5,00,000.00",
+      "Date of Deposit: 01/10/2026",
+      "Maturity Date: 01/10/2027",
+    ]),
+  });
+  await expect(page.getByText("Scanned clean", { exact: true })).toBeVisible({
+    timeout: 20000,
+  });
+  const values = page.locator(".doc-values");
+  await expect(async () => {
+    await values.getByText("Read values from document").click();
+    await expect(values).toContainText("₹5,00,000.00 (page 1", {
+      timeout: 1500,
+    });
+  }).toPass({ timeout: 20000, intervals: [1000] });
+  await expect(values).toContainText("Bank name · not read");
+  await page.screenshot({
+    path: "test-results/extraction.png",
+    fullPage: true,
+  });
+  await expect(page.locator(".facts").first()).toContainText("₹1,000.00");
+  await values
+    .getByRole("button", { name: "Review these values in the edit form" })
+    .click();
+  await expect(page.getByLabel("Principal amount (INR)")).toHaveValue(
+    "500000.00",
+  );
+  await expect(page.getByText("Values read from your document")).toBeVisible();
+  await page.getByRole("button", { name: "Save changes" }).click();
+  await expect(page.locator(".facts").first()).toContainText("₹5,00,000.00");
+  await expect(page.getByText("Draft updated", { exact: true })).toBeVisible();
 });

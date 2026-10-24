@@ -50,3 +50,5 @@ Migration 014: `release_requests` (policy snapshot, status with allowed transiti
 Migration 015: instrument and release status `closed` (approved → closed transition), append-only `release_instructions` (one per request, unique reference) and `release_executions` (positive amount, independent methods only).
 
 Migration 016: `exports` (owner, metric, status, institution scope fixed at build, object key/version/hash, expiry and purge times). Operational record, not history: exports are deliberately short-lived.
+
+Migration 017: append-only `extraction_runs` (unique per document and extractor version) and `extracted_fields` (proposed or abstained; a proposed field must have a value).

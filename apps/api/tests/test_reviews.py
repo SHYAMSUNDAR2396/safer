@@ -71,6 +71,8 @@ def test_evidence_is_kept_apart_from_claims_and_compared_by_code(clients, actors
         "confirmed": "500000.00",
         "status": "match",
         "simulated": False,
+        "extracted": None,
+        "extracted_differs": False,
         "evidence_id": None,
     }
     assert rows["maturity_date"]["claimed"] == "2027-10-01"

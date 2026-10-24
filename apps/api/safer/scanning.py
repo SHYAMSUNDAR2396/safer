@@ -143,6 +143,10 @@ def _scan(db: Session, s3, settings, doc) -> str:
             signature=signature,
         )
     )
+    if outcome == "clean":
+        from safer.jobs import enqueue  # jobs imports this module
+
+        enqueue(db, "extract_document", {"document_id": str(doc.id)}, f"extract_document:{doc.id}")
     if outcome != "error" or previous_errors + 1 >= MAX_ATTEMPTS:
         instrument = db.get(Instrument, doc.instrument_id)
         db.add(

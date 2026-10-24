@@ -27,3 +27,5 @@ SAF-019: release decisions require explicit release authority (SAF-017), separat
 SAF-020: execution is evidenced, not performed: SAFER records instructions and independent bank execution evidence and reconciles them; it has no payment capability. Recording execution is separated from approving and instructing.
 
 SAF-022: exports follow OWASP CSV-injection guidance (quote all, neutralise formula prefixes) and are bearer-free: there are no signed links; every download goes through the authenticated, re-authorising endpoint.
+
+SAF-023: PDFs are parsed only in the isolated child process with an empty environment, CPU limit and timeout, and only after a clean malware scan and hash re-check. Extracted text is treated as untrusted data: shown escaped by React, never executed, and never written to a claim without a person saving it.

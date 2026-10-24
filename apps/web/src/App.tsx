@@ -41,6 +41,7 @@ import { Observations, ReplacementPanel, ReviewWorkspace } from "./Review";
 import { AccessWorkspace } from "./Access";
 import { InstitutionRelease } from "./Release";
 import { Overview } from "./Dashboard";
+import { DocumentValues } from "./Extraction";
 import {
   events,
   documentStatus,
@@ -63,17 +64,19 @@ function InstrumentForm({
   item,
   obligations,
   me,
+  prefill,
   onClose,
   onSaved,
 }: {
   item?: Instrument;
   obligations: Obligation[];
   me: Me;
+  prefill?: Partial<Draft> | null;
   onClose: () => void;
   onSaved: (i: Instrument) => void;
 }) {
-  const [data, setData] = useState<Draft>(
-    item
+  const [data, setData] = useState<Draft>(() => ({
+    ...(item
       ? {
           obligation_id: item.obligation_id,
           bank_name: item.bank_name,
@@ -91,8 +94,9 @@ function InstrumentForm({
           currency: "INR",
           issue_date: "",
           maturity_date: "",
-        },
-  );
+        }),
+    ...prefill,
+  }));
   const [error, setError] = useState("");
   const [busy, setBusy] = useState(false);
   const change = (key: keyof Draft, value: string) =>
@@ -129,6 +133,12 @@ function InstrumentForm({
       <p className="dialog-intro">
         Record the instrument details. You can review them before submitting.
       </p>
+      {prefill && (
+        <p className="claim-hint">
+          Values read from your document are filled in. Check each one against
+          the original before saving.
+        </p>
+      )}
       <form onSubmit={save}>
         <fieldset disabled={busy}>
           <label>
@@ -237,11 +247,13 @@ function Documents({
   me,
   onUploaded,
   onRequirements,
+  onUseValues,
 }: {
   item: Instrument;
   me: Me;
   onUploaded: () => void;
   onRequirements: (missing: string[]) => void;
+  onUseValues: (values: Partial<Draft>) => void;
 }) {
   const [docs, setDocs] = useState<DocumentFile[] | null>(null);
   const [requirements, setRequirements] = useState<Requirement[]>([]);
@@ -376,6 +388,15 @@ function Documents({
                   Download
                 </a>
               )}
+              {d.scan_status === "clean" && d.current && (
+                <DocumentValues
+                  doc={d}
+                  canUse={
+                    item.status === "draft" && me.role === "institution_user"
+                  }
+                  onUse={onUseValues}
+                />
+              )}
             </li>
           ))}
         </ul>
@@ -433,7 +454,7 @@ function Details({
   item: Instrument;
   me: Me;
   onBack: () => void;
-  onEdit: () => void;
+  onEdit: (prefill?: Partial<Draft>) => void;
   onSubmitted: (i: Instrument) => void;
 }) {
   const [timeline, setTimeline] = useState<AuditEvent[]>([]);
@@ -560,7 +581,7 @@ function Details({
           </div>
           {item.status === "draft" && me.role === "institution_user" && (
             <div className="record-actions">
-              <button className="secondary" onClick={onEdit}>
+              <button className="secondary" onClick={() => onEdit()}>
                 Edit draft
               </button>
               <button
@@ -602,6 +623,7 @@ function Details({
         me={me}
         onUploaded={() => setUploads((n) => n + 1)}
         onRequirements={setMissing}
+        onUseValues={onEdit}
       />
       {deadlines && <DeadlinesPanel data={deadlines} />}
       {replacement && item.status !== "draft" && (
@@ -665,6 +687,7 @@ export default function App() {
   const [obligations, setObligations] = useState<Obligation[]>([]);
   const [selected, setSelected] = useState<Instrument | null>(null);
   const [form, setForm] = useState<false | "new" | "edit">(false);
+  const [prefill, setPrefill] = useState<Partial<Draft> | null>(null);
   const [search, setSearch] = useState("");
   const [query, setQuery] = useState("");
   const [loading, setLoading] = useState(false);
@@ -904,7 +927,10 @@ export default function App() {
               item={selected}
               me={me}
               onBack={() => setSelected(null)}
-              onEdit={() => setForm("edit")}
+              onEdit={(values) => {
+                setPrefill(values ?? null);
+                setForm("edit");
+              }}
               onSubmitted={saved}
             />
           ) : (
@@ -1075,8 +1101,15 @@ export default function App() {
           item={form === "edit" && selected ? selected : undefined}
           obligations={obligations}
           me={me}
-          onClose={() => setForm(false)}
-          onSaved={saved}
+          prefill={prefill}
+          onClose={() => {
+            setForm(false);
+            setPrefill(null);
+          }}
+          onSaved={(i) => {
+            setPrefill(null);
+            saved(i);
+          }}
         />
       )}
       {guide && (

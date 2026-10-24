@@ -1,4 +1,4 @@
-# Implemented scope: M1 / SAF-001–007, M2 / SAF-008–012, M3 / SAF-013–016, M4 / SAF-017–020, M5 / SAF-021–022
+# Implemented scope: M1 / SAF-001–007, M2 / SAF-008–012, M3 / SAF-013–016, M4 / SAF-017–020, M5 / SAF-021–023
 
 Source: ../docs/design/NIDHISETU-REQUIREMENTS-ARCHITECTURE-v2.md and ../docs/SAFER-IMPLEMENTATION-BACKLOG.md. Later branding is SAFER.
 
@@ -194,3 +194,16 @@ Tiles flag non-zero attention items with an icon and label, never colour alone; 
 | Safe CSV cells | Every cell quoted; cells starting with `= + - @` tab or CR are prefixed with `'`; stored data is unchanged |
 | Expiring protected artifact | Private storage, one-hour expiry (410 after), purged by the relay every minute |
 | No cross-institution leakage | Scope recomputed per owner at build time; no shared cache; responses are no-store; duplicate job delivery builds once |
+
+## SAF-023 — text-first document extraction (FR11)
+
+| Requirement | Delivered |
+|---|---|
+| Text-first extraction with source positions | The PDF text layer is read in the isolated, credential-free child process; each proposal keeps page, x/y position and the source line |
+| Run versions | `extraction_runs` per document and extractor version (`text-rules-1`); a new version means a new run, history kept |
+| Strict schema, abstention | Five fields (reference, amount, issue/maturity date, bank name) by fixed rules; a field abstains if missing, ambiguous (several different values) or invalid (e.g. 31/02); no invented confidence score |
+| Critical-field acceptance | Proposals never change a claim; the officer reviews them in the pre-filled edit form and saves; reviewers see them as a "From institution document" column flagged when they differ from the claim, never as evidence |
+| Manual fallback | Images and PDFs without a text layer are "manual entry required" (OCR is not configured); unreadable files fail safely |
+| Source ACL inherited | Same access as the document: own institution or assigned reviewer; only clean-scanned documents are read; extraction is queued as an outbox job after a clean scan |
+
+No AI model is involved in SAF-023.

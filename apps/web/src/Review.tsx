@@ -606,6 +606,7 @@ function CaseView({
                     <tr>
                       <th>Field</th>
                       <th>Institution claim</th>
+                      <th>From institution document</th>
                       <th>Independent evidence</th>
                       <th>Result</th>
                     </tr>
@@ -615,6 +616,17 @@ function CaseView({
                       <tr key={row.field}>
                         <td>{row.label}</td>
                         <td>{shown(row.field, row.claimed)}</td>
+                        <td>
+                          {row.extracted
+                            ? shown(row.field, row.extracted)
+                            : "—"}
+                          {row.extracted_differs && (
+                            <span className="differs">
+                              {" "}
+                              · differs from claim
+                            </span>
+                          )}
+                        </td>
                         <td>{shown(row.field, row.confirmed)}</td>
                         <td>
                           <span className={`badge cmp-${row.status}`}>
