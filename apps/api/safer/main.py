@@ -16,6 +16,7 @@ from safer.auth import router as auth_router
 from safer.authority import router as authority_router
 from safer.bank import router as bank_router
 from safer.config import Settings
+from safer.dashboard import router as dashboard_router
 from safer.deadlines import router as deadlines_router
 from safer.documents import router as documents_router
 from safer.errors import Problem
@@ -153,6 +154,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     app.include_router(authority_router)
     app.include_router(policies_router)
     app.include_router(releases_router)
+    app.include_router(dashboard_router)
     return app
 
 

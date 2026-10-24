@@ -107,3 +107,7 @@ Ruling: "competent decision" = active release authority plus separation from cle
 Ruling: instruction is a record with a reference; delivery to the bank and actual execution are outside SAFER. Reconciliation compares amounts only; date and beneficiary checks would need real bank data formats.
 
 M4 (SAF-017–020) complete locally.
+
+## M5 / SAF-021 — 24 October 2026
+
+Ruling: metrics are declared once as SQL conditions; the total and the drill-down run the same query. The dashboard replaced the older ad hoc stat tiles on the register and review queue. Dataviz skill guidance applied (stat tiles, meter, reserved status colour with icon and label, table view).

@@ -5,7 +5,6 @@ import {
   Repeat2,
   FlaskConical,
   ChevronRight,
-  ClipboardCheck,
   FileText,
   Fingerprint,
   Inbox,
@@ -16,6 +15,7 @@ import {
 import { api, day, money } from "./api";
 import { MyAuthority } from "./Access";
 import { ReleaseCard, ReleaseDecisions } from "./Release";
+import { Overview } from "./Dashboard";
 import type {
   BankExchange,
   CaseField,
@@ -797,46 +797,7 @@ export function ReviewWorkspace({ me }: { me: Me }) {
       </div>
       <MyAuthority me={me} />
       <ReleaseDecisions me={me} />
-      <div className="stats">
-        <div className="stat">
-          <span>
-            Cases in queue
-            <Inbox size={17} />
-          </span>
-          <strong>{queue ? items.length : "—"}</strong>
-          <small>Assigned institutions only</small>
-        </div>
-        <div className="stat">
-          <span>
-            With mismatches
-            <Scale size={17} />
-          </span>
-          <strong>
-            {queue ? items.filter((q) => q.mismatched_fields).length : "—"}
-          </strong>
-          <small>Evidence differs from the claim</small>
-        </div>
-        <div className="stat">
-          <span>
-            Open observations
-            <MessageSquareWarning size={17} />
-          </span>
-          <strong>
-            {queue ? items.reduce((n, q) => n + q.open_discrepancies, 0) : "—"}
-          </strong>
-          <small>Awaiting response or resolution</small>
-        </div>
-        <div className="stat">
-          <span>
-            Fully confirmed
-            <ClipboardCheck size={17} />
-          </span>
-          <strong>
-            {queue ? items.filter((q) => q.confirmed_fields === 5).length : "—"}
-          </strong>
-          <small>All five fields match evidence</small>
-        </div>
-      </div>
+      <Overview onOpen={setOpen} />
       <section className="panel register">
         <div className="register-heading">
           <div>

@@ -50,6 +50,8 @@ Live OpenAPI: `http://localhost:8000/openapi.json`; interactive docs: `/docs`. S
 | POST | /api/v1/release-requests/{id}/instruction | Holder of release authority; valid approval required; one per request |
 | POST | /api/v1/release-requests/{id}/execution | Reviewer (not approver/instructor): executed_amount, executed_on, bank_transaction_ref, source, method, observed_at, note |
 | POST | /api/v1/release-requests/{id}/close | Reviewer: needs valid approval and matched reconciliation; FDR becomes closed |
+| GET | /api/v1/dashboard | Scoped metrics (key, group, label, grain, count, amount) and per-obligation cover |
+| GET | /api/v1/dashboard/{key} | The FDRs a metric counts |
 | GET | /health/live | Process liveness |
 | GET | /health/ready | Database connection readiness |
 

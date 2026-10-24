@@ -1,4 +1,4 @@
-# Implemented scope: M1 / SAF-001–007, M2 / SAF-008–012, M3 / SAF-013–016, M4 / SAF-017–020
+# Implemented scope: M1 / SAF-001–007, M2 / SAF-008–012, M3 / SAF-013–016, M4 / SAF-017–020, M5 / SAF-021
 
 Source: ../docs/design/NIDHISETU-REQUIREMENTS-ARCHITECTURE-v2.md and ../docs/SAFER-IMPLEMENTATION-BACKLOG.md. Later branding is SAFER.
 
@@ -171,3 +171,15 @@ Approval is an administrative decision only. Execution evidence and reconciliati
 | Reconciliation | Latest execution evidence vs instructed amount: matched or difference (short/over); earlier evidence kept |
 | No closure from approval alone | Close requires a still-valid approval, execution evidence and a matched reconciliation; closing marks the FDR closed, removing it from coverage, queues and reminders while keeping it readable as history |
 | No payment API | The instruction is a record; no route initiates or simulates a transfer (asserted by test over the OpenAPI paths) |
+
+## SAF-021 — scoped dashboard (FR08)
+
+| Requirement | Delivered |
+|---|---|
+| Defined grain | Every metric is a count of FDRs and the sum of their principal as submitted, stated on screen and in the API |
+| Scope | Institution users/auditors: own institution (including drafts); reviewers: institutions they hold active authority over (no drafts); admins: none |
+| Metrics | Portfolio (drafts, submitted and active, released and closed); needs attention (maturing within 30 days, matured while cover still required, renewal action due, escalated, open observations); release work (awaiting clearances, ready for decision, awaiting instruction, awaiting execution evidence); counted cover vs required per obligation |
+| Drill-down | Each tile opens exactly the FDRs it counts; one SQL definition serves both, so they cannot drift |
+| Totals reconcile | Portfolio buckets sum to the register's count and recorded amount on a known fixture; settled actions leave the queue |
+
+Tiles flag non-zero attention items with an icon and label, never colour alone; cover uses a meter with `role="meter"`; the drill-down is a table.

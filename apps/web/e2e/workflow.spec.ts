@@ -706,3 +706,31 @@ test("replaced FDR is released after clearances and a competent decision", async
   );
   await expect(page.locator(".page-heading .badge")).toContainText("Closed");
 });
+
+test("dashboard tiles drill down to exactly the FDRs they count", async ({
+  page,
+}) => {
+  await login(page, "alpha");
+  const tile = page.getByRole("button", { name: /^Submitted and active:/ });
+  const label = (await tile.getAttribute("aria-label"))!;
+  const count = Number(label.match(/: (\d+) FDRs/)![1]);
+  await page.screenshot({ path: "test-results/dashboard.png", fullPage: true });
+  await tile.click();
+  const dialog = page.getByRole("dialog");
+  await expect(dialog).toContainText(`${count} FDRs`);
+  await expect(dialog.locator("tbody tr")).toHaveCount(count);
+  const first = await dialog.locator("tbody tr td").first().innerText();
+  await dialog
+    .getByRole("button", { name: /^Open / })
+    .first()
+    .click();
+  await expect(page.getByRole("heading", { level: 1 })).toContainText(
+    first.split("\n")[0],
+  );
+  await signOut(page);
+  await login(page, "reviewer");
+  await expect(
+    page.getByRole("heading", { name: "Release work" }),
+  ).toBeVisible();
+  await expect(page.getByRole("button", { name: /^Drafts:/ })).toHaveCount(0);
+});

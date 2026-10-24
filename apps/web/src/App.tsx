@@ -7,7 +7,6 @@ import {
   ChevronRight,
   CircleHelp,
   Clock3,
-  FileCheck2,
   FilePlus2,
   FileText,
   Files,
@@ -41,6 +40,7 @@ import "./styles.css";
 import { Observations, ReplacementPanel, ReviewWorkspace } from "./Review";
 import { AccessWorkspace } from "./Access";
 import { InstitutionRelease } from "./Release";
+import { Overview } from "./Dashboard";
 import {
   events,
   documentStatus,
@@ -928,42 +928,7 @@ export default function App() {
                   </button>
                 )}
               </div>
-              <div className="stats">
-                <div className="stat">
-                  <span>
-                    Total records
-                    <Files size={17} />
-                  </span>
-                  <strong>{register?.summary.total ?? "—"}</strong>
-                  <small>Within your institution</small>
-                </div>
-                <div className="stat">
-                  <span>
-                    Recorded principal
-                    <Landmark size={17} />
-                  </span>
-                  <strong className="money-stat">
-                    {register ? money(register.summary.recorded_amount) : "—"}
-                  </strong>
-                  <small>Includes drafts · Not verified coverage</small>
-                </div>
-                <div className="stat">
-                  <span>
-                    Drafts
-                    <Clock3 size={17} />
-                  </span>
-                  <strong>{register?.summary.drafts ?? "—"}</strong>
-                  <small>Ready for your review</small>
-                </div>
-                <div className="stat">
-                  <span>
-                    Submitted metadata
-                    <FileCheck2 size={17} />
-                  </span>
-                  <strong>{register?.summary.submitted ?? "—"}</strong>
-                  <small>Read-only snapshots preserved</small>
-                </div>
-              </div>
+              <Overview onOpen={open} />
               <section className="panel register">
                 <div className="register-heading">
                   <div>
