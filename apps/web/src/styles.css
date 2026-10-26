@@ -1021,6 +1021,12 @@ label input::placeholder {
   padding: 14px;
   justify-content: space-between;
 }
+.login-card > button:disabled {
+  width: 100%;
+  padding: 14px;
+  white-space: normal;
+  cursor: not-allowed;
+}
 .login-note {
   display: flex;
   align-items: flex-start;

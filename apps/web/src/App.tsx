@@ -681,7 +681,10 @@ function Details({
 }
 
 export default function App() {
-  const [me, setMe] = useState<Me | null | undefined>(undefined);
+  const previewOnly = import.meta.env.VITE_PREVIEW_ONLY === "true";
+  const [me, setMe] = useState<Me | null | undefined>(
+    previewOnly ? null : undefined,
+  );
   const [error, setError] = useState("");
   const [register, setRegister] = useState<Register | null>(null);
   const [obligations, setObligations] = useState<Obligation[]>([]);
@@ -693,6 +696,7 @@ export default function App() {
   const [loading, setLoading] = useState(false);
   const [guide, setGuide] = useState(false);
   useEffect(() => {
+    if (previewOnly) return;
     api<Me>("/api/v1/me")
       .then(setMe)
       .catch((e) => {
@@ -811,24 +815,40 @@ export default function App() {
           <small>SIH 2026 · Problem Statement 26265</small>
         </section>
         <section className="login-side">
-          <span className="demo-label">SYNTHETIC DEMONSTRATION</span>
+          <span className="demo-label">
+            {previewOnly ? "FRONTEND PREVIEW" : "SYNTHETIC DEMONSTRATION"}
+          </span>
           <div className="login-card">
             <div className="login-icon">
               <Building2 size={30} />
             </div>
-            <h2>Your institutional workspace</h2>
+            <h2>
+              {previewOnly
+                ? "Explore the SAFER concept"
+                : "Your institutional workspace"}
+            </h2>
             <p>
-              Sign in with a provisioned account to manage your institution’s
-              FDR records.
+              {previewOnly
+                ? "This preview introduces SAFER’s institutional deposit workspace. Sign-in, uploads, saved records and review actions are unavailable because no backend is connected."
+                : "Sign in with a provisioned account to manage your institution’s FDR records."}
             </p>
-            <a className="primary" href="/auth/login">
-              Sign in securely
-              <ArrowRight size={18} />
-            </a>
+            {previewOnly ? (
+              <button className="primary" disabled>
+                <LockKeyhole size={18} />
+                Sign-in unavailable in preview
+              </button>
+            ) : (
+              <a className="primary" href="/auth/login">
+                Sign in securely
+                <ArrowRight size={18} />
+              </a>
+            )}
             <div className="login-note">
               <ShieldCheck size={17} />
               <span>
-                Access is limited to your assigned institution and role.
+                {previewOnly
+                  ? "This preview does not collect or store FDR data."
+                  : "Access is limited to your assigned institution and role."}
               </span>
             </div>
           </div>

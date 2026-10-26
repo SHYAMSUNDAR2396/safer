@@ -89,6 +89,16 @@ API tests truncate **safer_test only**. Browser tests use the running local demo
 
 Stop API and Vite with Ctrl-C. `./scripts/compose.sh stop` stops infrastructure and preserves volumes. Do not use `down -v` unless intentionally discarding local data. Seed is repeatable and does not overwrite FDRs.
 
+## Free frontend preview
+
+The frontend can be published as a free Render Static Site. Select `apps/web`
+as the root directory, `npm ci && npm run build` as the build command, and
+`dist` as the publish directory. Set `VITE_PREVIEW_ONLY=true` before building.
+This displays a clearly labelled preview with sign-in disabled and makes no
+backend requests. Login, uploads, saved records and review actions are unavailable.
+No API secrets or local `.env` files are needed. Omit this setting for the
+existing full local demo; it does not enable public backend deployment.
+
 ## Documentation
 
 - `REQUIREMENTS.md` — implemented acceptance scope
