@@ -29,6 +29,7 @@ jobs:
           uv run alembic upgrade head
           uv run alembic -x test=true upgrade head
           PYTHONPATH=apps/api uv run python -m safer.seed
+          uv run python scripts/configure_mfa.py
       - name: Scanner isolation
         run: |
           # The parser container must reach neither the internet nor storage/database.
@@ -38,6 +39,14 @@ jobs:
           uv run ruff check apps/api scripts
           uv run ruff format --check apps/api scripts
           uv run pytest -q
+      - name: Synthetic assistance evaluation
+        run: PYTHONPATH=apps/api uv run python -m safer.evaluation --security --output .local/evaluation/saf026
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: safer-synthetic-evaluation
+          path: .local/evaluation/saf026/
+          retention-days: 7
       - name: Frontend checks
         working-directory: apps/web
         run: |
@@ -60,3 +69,34 @@ jobs:
       - name: Stop services
         if: always()
         run: ./scripts/compose.sh stop
+
+  security:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: astral-sh/setup-uv@v6
+        with:
+          python-version: '3.14'
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: uv sync --locked
+      - run: npm ci
+        working-directory: apps/web
+      - name: Build portable runtime images
+        run: |
+          docker build -f Dockerfile.api -t safer-api:local-readiness .
+          docker build -f Dockerfile.web -t safer-web:local-readiness .
+      - name: Dependencies, runtime vulnerabilities and SBOM
+        run: ./scripts/security_scan.sh
+      - name: Source secret scan
+        run: |
+          docker run --rm -v "$PWD:/source:ro" aquasec/trivy:0.76.0 fs --scanners secret --exit-code 1 --skip-dirs /source/.git,/source/.venv,/source/.local,/source/apps/web/node_modules --skip-files /source/.env /source
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: safer-local-security-evidence
+          path: |
+            .local/security/*.json
+          retention-days: 7

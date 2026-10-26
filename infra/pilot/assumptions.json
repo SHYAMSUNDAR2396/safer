@@ -1,0 +1,11 @@
+{
+  "classification": "synthetic_only",
+  "approval_required_before_real_or_anonymized_data": "written approval from AICTE data owner",
+  "hosting": {"packaging": "portable containers / Docker Compose", "target": "MeitY-empanelled Indian cloud or NIC/MeghRaj, not yet selected", "residency": "India including replicas, backups, logs and key services", "provider_api_calls": "none"},
+  "identity": {"provider": "Keycloak", "privileged_roles": ["reviewer", "release approver", "admin"], "second_factor": "TOTP", "optional": "WebAuthn after separate enrollment/recovery tests", "federation": "disabled until approved; Keycloak realm config, no application code switch"},
+  "keys": {"local_adapter": "OpenBao Transit", "algorithm": "AES-256-GCM envelope encryption", "future": "swap KeyWrapper for chosen KMS/HSM", "plaintext_keys": "never in .env or repository; transient process memory only", "custody": "local single-custodian drill only; independent pilot custody pending"},
+  "evaluation": {"corpus": "synthetic layouts/scans/noise/edge cases only", "representative_thresholds": "pending representative data owner approval", "human_baseline": "not measured"},
+  "retention": "not guessed; owner must approve periods, legal holds and deletion handling",
+  "operations": {"alert_owner": "security-service-owner placeholder; named responder pending", "backup_owner": "independent backup administrator pending", "rpo_target_minutes": 60, "rto_target_minutes": 240, "availability": "no production HA claim"},
+  "capacity": {"institutions": 10000, "instruments": 100000, "requests_per_second": 50, "read_p95_ms": 500, "write_p95_ms": 1000, "server_error_rate_below": 0.01}
+}

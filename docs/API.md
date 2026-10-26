@@ -19,7 +19,8 @@ Live OpenAPI: `http://localhost:8000/openapi.json`; interactive docs: `/docs`. S
 | POST | /api/v1/instruments/{id}/documents?filename=&kind= | kind fdr_certificate, bank_letter or other; raw file body, Content-Type application/pdf, image/png or image/jpeg; draft only; 201 quarantined |
 | GET | /api/v1/documents/{id}/download | Clean files only; attachment with sandbox CSP; audited |
 | GET | /api/v1/reviews | Reviewer queue: assigned institutions' submitted cases |
-| GET | /api/v1/reviews/{id} | Claim, field comparison, evidence log, documents, observations, audit |
+| GET | /api/v1/reviews/{id} | Claim, field comparison, evidence log, documents, observations, audit, summary source state |
+| GET | /api/v1/reviews/{id}/summary | Reviewer: local cited summary; optional basis_sha256 revalidation returns stale with empty sections on mismatch |
 | POST | /api/v1/reviews/{id}/evidence | field, value, source, method, observed_at (timezone required, not future), note |
 | POST | /api/v1/reviews/{id}/discrepancies | field (or null for general), message |
 | GET | /api/v1/instruments/{id}/discrepancies | Observations on the institution's own record |
@@ -79,3 +80,44 @@ Deadline reminders include `deliveries`: per-recipient email status (pending, se
 Release views now include `instruction`, `executions` and `reconciliation`. Instrument status may be `closed`. Review case views include the FDR `status` and remain readable after closure.
 
 Review comparison rows include `extracted` and `extracted_differs` (from the institution's current required documents; informational, not evidence).
+
+## SAF-024 explanation fallback
+
+`GET /api/v1/reviews/{id}/explanations`: active assigned reviewer only (403 wrong role, 404 outside scope or unsubmitted). Same data is included as `explanations` in the review case response. Responses are no-store.
+
+Enabled response: `enabled`, `mode=deterministic_fallback`, `version`, `basis_sha256`, `items`. Each item contains field/label, deterministic status, claimed/evidence/document values, simulator and document-difference flags, fixed advisory wording and citations. Submission/evidence ids identify immutable case records. Extraction citations also contain exact document id/version/SHA-256, run id, extractor, field id and page/x/y. Citation `href` values resolve to source anchors in the open reviewer case; they are not public document links. Opening the case always re-authorizes access.
+
+Disabled response: `{ "enabled": false, "mode": "disabled", "items": [] }`. No comparison or authority mutation occurs. The source digest identifies the fact basis, not a signature, approval or bank verification. No LLM provider exists in this slice.
+
+## SAF-025 summary contract
+
+`GET /api/v1/reviews/{id}/summary` checks current reviewer portfolio authority, then builds a read-only, local summary. Response: `enabled`, `status: current`, `mode: deterministic_fallback`, template `version`, `basis_sha256`, and `sections[]` with `title`, fixed `text`, exact string-valued `facts` and `citations[]` (`kind`, source `id`, in-case `href`; document citations include `sha256` and `object_version`). No authoritative writes occur.
+
+Supply optional `?basis_sha256=<64 lowercase hex characters>` to revalidate a held summary. A changed source returns `status: stale`, the current digest and **empty sections**, so the old facts cannot be mistaken for current evidence. Disabled response is exactly `{ "enabled": false, "status": "disabled", "sections": [] }`. Invalid digest: 422; wrong role: 403; missing/out-of-portfolio/revoked assignment: 404. Authorization applies even when disabled. Case details now include `submission_id`, `row_version` and `summary_state: {enabled, basis_sha256}`. Every response inherits no-store headers.
+
+## Local readiness changes
+
+`GET /api/v1/reviews` now accepts `limit` (1–200, default 200) and optional UUID `cursor`;
+the additive `next_cursor` response field is null at the end. Pages use immutable
+submission time plus instrument ID, oldest first. Each request rechecks authority,
+including the anchor: foreign/draft/revoked anchors return 404; invalid limits/cursors
+return 422. A now-closed but still authorized anchor remains usable. The browser
+offers **Load more cases**, avoiding a silent 200-case truncation.
+
+No new business endpoint or real-data activation API was added. Privileged OIDC
+callbacks lacking validated signed `acr=2` return 403 (`mfa_required`). A privileged
+request with an old/password-only session returns 401 (`mfa_required`); ordinary
+institution sessions retain the existing role rules. TOTP enrollment stays in Keycloak.
+HTTP responses include `Server-Timing: app;dur=<milliseconds>` for application duration;
+it excludes network and body transfer. Readiness health checks cover DB connectivity,
+not the health of every key/queue/scanning dependency.
+
+The optional Transit-backed storage adapter preserves upload/download contracts and
+plaintext hash/version bindings. Unavailable keys or invalid envelopes fail closed
+through the existing safe storage-error/retry paths, with no plaintext fallback.
+Evaluation, audit/recovery/capacity drills and the gate ledger are local operator CLIs,
+not web-accessible administrative APIs. Their use does not authorize real data.
+
+## Optional advisory AI
+
+GET/POST `/api/v1/reviews/{id}/ai` add current source packages and explicit generation for `summary` or `explanations`. POST requires CSRF and the GET source digest; changed sources return 409. Both enforce reviewer case assignment. Existing GET summary/explanation endpoints never call a provider. See [contract and failure modes](design/LLM-INTEGRATION.md).

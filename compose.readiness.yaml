@@ -1,0 +1,25 @@
+# Additive LOCAL SYNTHETIC READINESS only. No production activation.
+services:
+  key-volume-init:
+    image: ghcr.io/openbao/openbao:2.7.1@sha256:6d2b93856e3fcf7b18ad855a0b51eaba474dc8b79cf554379ea32034797d2acf
+    user: "0:0"
+    entrypoint: ["sh", "-ec", "chown 100:1000 /bao/data && chmod 700 /bao/data"]
+    volumes: ["keydata:/bao/data"]
+    network_mode: none
+    cap_drop: [ALL]
+    cap_add: [CHOWN, FOWNER, DAC_OVERRIDE]
+    security_opt: [no-new-privileges:true]
+  key-service:
+    image: ghcr.io/openbao/openbao:2.7.1@sha256:6d2b93856e3fcf7b18ad855a0b51eaba474dc8b79cf554379ea32034797d2acf
+    depends_on:
+      key-volume-init: {condition: service_completed_successfully}
+    command: ["server", "-config=/bao/config/server.hcl"]
+    ports: ["127.0.0.1:58200:8200"]
+    volumes:
+      - ./infra/openbao/server.hcl:/bao/config/server.hcl:ro
+      - keydata:/bao/data
+    cap_drop: [ALL]
+    security_opt: [no-new-privileges:true]
+    mem_limit: 256m
+volumes:
+  keydata:

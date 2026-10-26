@@ -13,6 +13,9 @@ import {
   Scale,
 } from "lucide-react";
 import { api, day, money } from "./api";
+import { CaseSummary } from "./CaseSummary";
+import { AiAssistance } from "./AiAssistance";
+import { Explanations } from "./Explanations";
 import { MyAuthority } from "./Access";
 import { ReleaseCard, ReleaseDecisions } from "./Release";
 import { Overview } from "./Dashboard";
@@ -119,7 +122,7 @@ export function Thread({
     }
   }
   return (
-    <li className={`thread ${item.status}`}>
+    <li id={`observation-${item.id}`} className={`thread ${item.status}`}>
       <div className="thread-head">
         <strong>{item.label}</strong>
         <span className={`badge obs-${item.status}`}>
@@ -537,12 +540,16 @@ function CaseView({
   const load = () =>
     api<ReviewCase>(`/api/v1/reviews/${id}`)
       .then(setData)
-      .catch((e) => setError(e.message));
+      .catch((e) => {
+        setData(null);
+        setError(e.message);
+      });
   useEffect(() => {
     void load();
   }, [id]);
   const saved = () => {
     setDialog("");
+    setData(null);
     void load();
   };
   const submitted = new Set(data?.submitted_documents.map((d) => d.id));
@@ -552,6 +559,19 @@ function CaseView({
         <ArrowLeft size={16} />
         Back to review queue
       </button>
+      <CaseSummary
+        key={id}
+        id={id}
+        source={data?.summary_state ?? null}
+        refresh={load}
+      />
+      <AiAssistance
+        key={`ai-${id}`}
+        id={id}
+        csrf={me.csrf_token}
+        source={data?.summary_state ?? null}
+        refresh={load}
+      />
       {error && <Notice message={error} />}
       {!data ? (
         !error && <p role="status">Loading case…</p>
@@ -591,7 +611,7 @@ function CaseView({
             )}
           </div>
           <div className="detail-grid">
-            <section className="panel">
+            <section className="panel" id="submitted-claim">
               <div className="section-title">
                 <Scale size={19} />
                 <h2>Claim and independent evidence</h2>
@@ -644,7 +664,7 @@ function CaseView({
               {data.evidence.length ? (
                 <ul className="evidence-log">
                   {data.evidence.map((e) => (
-                    <li key={e.id}>
+                    <li key={e.id} id={`evidence-${e.id}`}>
                       <strong>
                         {e.label}: {shown(e.field, e.value)}
                       </strong>
@@ -673,7 +693,16 @@ function CaseView({
               <Timeline items={data.audit} />
             </section>
           </div>
-          <DeadlinesPanel data={data.deadlines} />
+          <Explanations
+            data={data.explanations}
+            refresh={() => {
+              setData(null);
+              void load();
+            }}
+          />
+          <div id="summary-deadlines">
+            <DeadlinesPanel data={data.deadlines} />
+          </div>
           <ReplacementPanel
             view={data.replacement}
             coverage={data.coverage}
@@ -685,7 +714,7 @@ function CaseView({
             <BankSimulator data={data} me={me} onChange={load} />
           )}
           {data.releases.length > 0 && (
-            <section className="panel documents">
+            <section id="summary-releases" className="panel documents">
               <div className="section-title">
                 <Landmark size={19} />
                 <h2>Release requests</h2>
@@ -728,7 +757,11 @@ function CaseView({
             </p>
             <ul className="doc-list">
               {data.documents.map((d) => (
-                <li key={d.id} className={d.current ? "" : "replaced"}>
+                <li
+                  key={d.id}
+                  id={`document-${d.id}`}
+                  className={d.current ? "" : "replaced"}
+                >
                   <FileText size={18} />
                   <div>
                     <strong>{d.filename}</strong>
@@ -783,12 +816,26 @@ export function ReviewWorkspace({ me }: { me: Me }) {
   const [queue, setQueue] = useState<ReviewItem[] | null>(null);
   const [open, setOpen] = useState<string | null>(null);
   const [error, setError] = useState("");
+  const [nextCursor, setNextCursor] = useState<string | null>(null);
+  const [loadingMore, setLoadingMore] = useState(false);
+  async function load(cursor?: string) {
+    setLoadingMore(true);
+    setError("");
+    try {
+      const r = await api<{ items: ReviewItem[]; next_cursor: string | null }>(
+        `/api/v1/reviews${cursor ? `?cursor=${encodeURIComponent(cursor)}` : ""}`,
+      );
+      setQueue((old) => (cursor ? [...(old || []), ...r.items] : r.items));
+      setNextCursor(r.next_cursor);
+    } catch (e) {
+      setError((e as Error).message);
+    } finally {
+      setLoadingMore(false);
+    }
+  }
   useEffect(() => {
     if (open) return;
-    setError("");
-    api<{ items: ReviewItem[] }>("/api/v1/reviews")
-      .then((r) => setQueue(r.items))
-      .catch((e) => setError(e.message));
+    void load();
   }, [open]);
   if (open)
     return (
@@ -900,6 +947,20 @@ export function ReviewWorkspace({ me }: { me: Me }) {
             </div>
             <h3>No cases waiting</h3>
             <p>Submitted FDRs from your assigned institutions appear here.</p>
+          </div>
+        )}
+        {nextCursor && (
+          <div className="register-footer">
+            <p className="muted small" aria-live="polite">
+              {items.length} cases loaded
+            </p>
+            <button
+              className="secondary"
+              disabled={loadingMore}
+              onClick={() => load(nextCursor)}
+            >
+              {loadingMore ? "Loading more cases…" : "Load more cases"}
+            </button>
           </div>
         )}
       </section>

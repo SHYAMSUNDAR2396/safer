@@ -132,6 +132,7 @@ def clients(db, actors, settings):
                 token_hash=hashlib.sha256(token.encode()).hexdigest(),
                 user_id=actors[name].id,
                 csrf_token=csrf,
+                mfa_verified=True,  # Explicit authenticated fixture; MFA boundary has separate tests.
                 created_at=now,
                 last_seen_at=now,
             )

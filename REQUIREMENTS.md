@@ -207,3 +207,51 @@ Tiles flag non-zero attention items with an icon and label, never colour alone; 
 | Source ACL inherited | Same access as the document: own institution or assigned reviewer; only clean-scanned documents are read; extraction is queued as an outbox job after a clean scan |
 
 No AI model is involved in SAF-023.
+
+## SAF-024 — source-linked discrepancy explanations (FR14 fallback)
+
+- Read-only reviewer endpoint and case view explain the existing deterministic comparison, with claimed, evidence and extracted values kept separate.
+- Citations identify the immutable submission, latest evidence record, and (when present) a clean document frozen into that submission with exact version/hash, extraction run/field and page/position.
+- Generated from fixed templates on every read; source facts determine a basis digest. No stored stale explanation cache, arbitrary source text as instructions, fraud verdict, status change or release authority.
+- Simulator results are explicitly synthetic and cannot imply real bank confirmation.
+- `EXPLANATIONS_ENABLED=false` removes explanations independently; the comparison, evidence and human review remain usable.
+- Mode is labelled `deterministic_fallback`. The user explicitly selected local fallback on 24 October 2026, accepting this scope for SAF-024. Model-generated wording is not implemented or required for this selected mode. Any later model integration needs a separate provider/privacy decision and evaluation. No data is sent to an AI service.
+
+## SAF-025 — cited case summaries (FR15 local fallback)
+
+- Assigned reviewers only; generation and revalidation recheck current assignment and role, including after revocation.
+- Claim references, decimal amounts and ISO dates are copied exactly from the immutable submission. No generated monetary values or approval recommendations.
+- Summaries cite submission, latest per-field evidence, frozen document versions/hashes, observation threads, deadline panel and each release request. Simulated evidence cannot count as independent confirmation.
+- Versioned material source digest covers case status/version, submission, comparisons, evidence, documents, observations/replies, monitoring state, replacement/coverage and release decisions/executions. Audit-only access events do not invalidate it.
+- Local case refresh detects changed facts; current browser summaries revalidate every 15 seconds and on focus. A mismatch hides facts until explicit regeneration. An authorization/network failure hides the summary; server responses use no-store.
+- `SUMMARIES_ENABLED=false` disables this feature independently. No persisted summary history, AI provider, LLM call or bank verification integration is added. This is an advisory local prototype, subject to the pilot gates.
+
+Summary revalidation has a 10-second timeout; expired validation hides facts and permits regeneration. After disabling and re-enabling summaries, reload the browser page to clear the disabled snapshot.
+
+## SAF-026–032 — approved local readiness scope
+
+- Synthetic-only corpus evaluation produces exact denominators, strata, provenance,
+  timing and real executed safety-suite evidence. Required test identities and exact
+  per-section source/version checks must fail on partial, duplicate or misplaced data.
+  Corrected synthetic regression results cannot certify representative accuracy/utility.
+- Portable local HTTPS containers, Keycloak TOTP for reviewers/approvers/admins,
+  per-request session assurance, restricted migration/runtime DB roles and context-bound
+  encrypted object envelopes behind a provider-neutral key interface. New encryption
+  keys/recovery material stay outside `.env` and repo. External federation is disabled
+  configuration; OpenBao Transit is the local adapter, not a cloud KMS selection.
+- Local encrypted audit/checkpoint integrity, six capture-only alert rules, isolated
+  encrypted DB restore and declared scoped capacity evidence have repeatable CLIs.
+  Full SIEM, independent custody, whole-system DR/HA and DDoS controls remain gates.
+- Dependency/image/source scanning, SBOMs, automated accessibility/keyboard checks and
+  independent code review support local QA. Hosted CI, independent security assessment,
+  rollback rehearsal and broad user accessibility acceptance are not claimed.
+- All phase assumptions are recorded in `infra/pilot/assumptions.json`; future hosting
+  targets India-resident MeitY-empanelled/NIC/MeghRaj without provider-specific APIs.
+  Written AICTE data-owner approval is mandatory before any real or anonymized data.
+  No owner approvals are fabricated; production rejection remains in force.
+
+See `docs/PILOT-READINESS.md` for phase-by-phase evidence and residual acceptance work.
+
+## Optional LLM enhancement — 25 October 2026
+
+Explicit reviewer-triggered advisory summaries and explanations may use Gemini for operator-approved synthetic source snapshots. Preserve deterministic fallback, current case authorization, source-version binding and financial workflow authority. External inference defaults off. Live quality evaluation, external synthetic-data processing consent and production data-residency acceptance remain required rollout gates. See `docs/design/LLM-INTEGRATION.md`.

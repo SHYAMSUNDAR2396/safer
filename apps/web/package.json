@@ -7,8 +7,8 @@
     "dev": "vite --host 127.0.0.1",
     "build": "tsc -b && vite build",
     "test:e2e": "playwright test",
-    "format": "prettier --write src e2e *.ts",
-    "format:check": "prettier --check src e2e *.ts"
+    "format": "prettier --write src e2e e2e-readiness *.ts",
+    "format:check": "prettier --check src e2e e2e-readiness *.ts"
   },
   "dependencies": {
     "lucide-react": "^0.468.0",
@@ -16,6 +16,7 @@
     "react-dom": "^19.2.0"
   },
   "devDependencies": {
+    "@axe-core/playwright": "^4.14.0",
     "@playwright/test": "^1.56.0",
     "@types/node": "^22.0.0",
     "@types/react": "^19.2.0",

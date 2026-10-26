@@ -121,3 +121,38 @@ Ruling: no signed URLs; downloads always pass through the API so re-authorisatio
 Ruling: deterministic text-first extraction instead of an AI model: the backlog asks for text-first extraction with abstention, which fixed rules meet without sending data to a provider. OCR stays unconfigured; scanned images need manual entry. Applying values reuses the normal edit form, so acceptance is the officer's save.
 
 Also: design-hook review replaced thick coloured side stripes on cards with tinted outlines (every card already carries a text status).
+
+## SAF-024 fallback — 24 October 2026
+
+Ruling: local deterministic templates, not generated AI wording, until a provider/privacy choice is made. This preserves the manual fallback without pretending that an AI model exists. No outbound data transfer or authoritative writes. Exact evidence IDs and frozen document version/hash/run/page citations, per-request basis digest, scoped reviewer access and independent switch-off. Provider-generated FR14 wording remains deferred.
+
+API RED: 7 missing-route failures; GREEN: 7 targeted and 229 full-suite passes. Browser RED: explanation UI absent; source-link check subsequently corrected to expand the native Sources and versions disclosure before clicking. Independent read-only review found no important findings. Build and backend/frontend lint/format pass. Browser final results are recorded in TESTING.md after the suite completes.
+
+Final browser result: **13 passed (1.3m)** including the expanded source-linked mismatch workflow; screenshot inspected. SAF-024 local fallback verified, provider-generated explanations remain pending. No production deployment or external provider access.
+
+User decision (24 October): explicitly chose local fallback for SAF-024. Approved fallback scope is complete and verified; no AI provider selection is pending for SAF-024. Model-generated wording remains an optional future enhancement. No code or runtime changes were needed.
+
+## SAF-025 local case summaries — 24 October 2026
+
+Implemented versioned deterministic summaries over the current authorized reviewer case view, with exact immutable submission facts, latest-evidence counts excluding simulations, frozen document citations, observation/deadline/release source links, independent disable, and an explicit material-basis digest. The browser hides changed facts until regeneration and hides facts on failed or timed-out validation (15-second polling/focus, 10-second timeout). No model, external transfer, schema migration or stored summary history.
+
+Verification: **239 API tests in 78.05s; 13 real-login browser tests in 1.4m; frontend build; Ruff lint/format; Prettier; diff whitespace check**. Independent review's unbounded-validation issue fixed with held-request RED→GREEN; no other important findings. Deferred minor: reload after summaries are re-enabled. Local SAF-025 scope complete. SAF-026 evaluation is next; pilot gates remain unverified. No commits, remote publication or production deployment.
+
+
+## SAF-026–032 local readiness — 25 October 2026
+
+User approved synthetic-only, provider-neutral local work: portable containers; Keycloak privileged TOTP; OpenBao Transit behind a key wrapper; future India-resident hosting; no provider APIs or real/anonymized receipts without written data-owner approval.
+
+Implemented 138-document/12-review synthetic regression evaluation with independent labels, exact denominators/abstention, source/library/corpus provenance and 26 executed security-test identities. Initial two unsafe amount proposals fixed test-first; observed corpus became regression data. Representative holdout/utility acceptance remains blocked.
+
+Added portable non-root/read-only HTTPS API/web/worker containers, separate synthetic DB/bucket/queue, restricted runtime/migration roles, context-bound encrypted object envelopes and private runtime/operator mounts outside checkout/.env. Keycloak privileged TOTP/LoA2 and per-request MFA session assurance require migration018. Federation stays disabled configuration; real hosting/keys/identity acceptance remains pending.
+
+Actual local evidence: Transit context/admin-denial checks; exact TLS trust-anchor verification; encrypted-version hash roundtrips; runtime DDL/immutable-update/delete denials; encrypted audit projection/checkpoint integrity and six Mailpit-capture alert rules; encrypted dump/restore into NEW isolated scratch DB; 10k/100k seeded scoped ASGI workload at49.99 arrival / 49.94 completion RPS, read p95 30.601ms/write p95 29.166ms, no unexpected/server errors. DR is a database component only, not full PITR/object/identity/key-loss recovery or RPO/RTO proof.
+
+One independent read-only review found two important evaluation flaws: partial security JUnit could pass; summary citations could move to another section. Both reproduced RED and fixed GREEN; missing/duplicate/skipped test identities and wrong section/release sources now fail. A later real browser run exposed the older 200-case queue truncation; bounded keyset pagination and Load more cases now preserve access beyond the first page with reauthorized anchors. Regression RED→GREEN; final API suite272 passed in 76.63s. Final browser/container/readiness results are recorded in TESTING.md after their runs complete.
+
+Final dependency audits report zero known Python and Node findings; final runtime scans report zero HIGH/CRITICAL, with SBOMs and matched archive/image evidence. Source secret scan reports zero findings in its declared scope. These are time/artifact-specific local results. Full independent security assessment, hosted CI, signed provenance, rollback rehearsal, broader accessibility acceptance and real operational control verification remain pending. No commit, publication, production activation or real data use.
+
+Read docs/PILOT-READINESS.md and docs/DEPLOYMENT.md for evidence, one-hour key-token refresh, MFA fixture cleanup and all blocked sponsor/platform gates. SAF-029/031/032 remain incomplete as full pilot requirements. Local readiness does not remove production-mode rejection.
+
+Final readiness verification:13 workflow browser tests passed in 6.1m;2 HTTPS/encryption/accessibility browser tests passed in 7.5s. Updated foundation evidence passed after the final upload; labelled synthetic test OTP factors cleaned up on 4 fixture identities, preserving personal factors and required MFA. All 7 real-data pilot statuses remain blocked in .local/pilot-readiness.json. No further code changes after final green suites; evidence/docs only.

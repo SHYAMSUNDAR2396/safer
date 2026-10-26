@@ -1,0 +1,13 @@
+.git
+.env
+.local
+.superpowers
+**/node_modules
+**/.venv
+**/__pycache__
+**/test-results
+**/playwright-report
+**/dist
+output
+*.pem
+*.key

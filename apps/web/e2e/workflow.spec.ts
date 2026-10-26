@@ -1,9 +1,7 @@
 import { test, expect, type Page } from "@playwright/test";
 import { readFileSync } from "node:fs";
+import { loadReviewPages, login, signOut } from "./auth";
 
-const users = JSON.parse(
-  readFileSync("../../.local/demo-users.json", "utf8"),
-) as { username: string; password: string }[];
 function minimalPdf() {
   const objects = [
     "<< /Type /Catalog /Pages 2 0 R >>",
@@ -45,19 +43,6 @@ function receiptPdf(lines: string[]) {
     .join("")}trailer\n<< /Size 6 /Root 1 0 R >>\nstartxref\n${xref}\n%%EOF\n`;
   return Buffer.from(body, "latin1");
 }
-async function login(page: Page, name: string) {
-  const u = users.find((x) => x.username === name)!;
-  await page.goto("/");
-  await page.getByRole("link", { name: "Sign in securely" }).click();
-  await page.locator("#password").waitFor();
-  if (await page.getByRole("button", { name: "Restart login" }).isVisible()) {
-    await page.getByRole("button", { name: "Restart login" }).click();
-  }
-  await page.locator("#username").fill(u.username);
-  await page.locator("#password").fill(u.password);
-  await page.locator("#kc-login").click();
-  await expect(page.getByRole("button", { name: "Sign out" })).toBeVisible();
-}
 async function submitCase(page: Page, ref: string, maturity = "2027-10-01") {
   await login(page, "alpha");
   await page.getByRole("button", { name: "New FDR" }).click();
@@ -78,12 +63,6 @@ async function submitCase(page: Page, ref: string, maturity = "2027-10-01") {
     page.getByText("Metadata submitted", { exact: true }),
   ).toBeVisible();
   await signOut(page);
-}
-async function signOut(page: Page) {
-  await page.getByRole("button", { name: "Sign out" }).click();
-  await expect(
-    page.getByRole("link", { name: "Sign in securely" }),
-  ).toBeVisible();
 }
 
 test("institution creates, edits, submits and reloads an audited record", async ({
@@ -261,6 +240,18 @@ test("reviewer compares evidence and resolves an observation with the institutio
     page.getByRole("heading", { name: "Cases awaiting review" }),
   ).toBeVisible();
   await page.getByRole("button", { name: ref, exact: true }).click();
+  const ai = page.getByRole("region", { name: "AI assistance", exact: true });
+  await ai
+    .getByRole("button", { name: "Explain discrepancies with AI" })
+    .click();
+  await expect(ai).toContainText("Local fallback · AI is switched off.");
+  await expect(ai.getByText("250000.00", { exact: true })).toBeVisible();
+  const summary = page.locator(".case-summary");
+  await summary
+    .getByRole("button", { name: "Generate case summary", exact: true })
+    .click();
+  await expect(summary).toContainText("Local rule-based summary");
+  await expect(summary.getByText("Claimed principal (INR)")).toBeVisible();
   for (const [field, value, result] of [
     ["Principal amount", "250000.00", "Match"],
     ["Maturity date", "2027-09-30", "Mismatch"],
@@ -276,6 +267,117 @@ test("reviewer compares evidence and resolves an observation with the institutio
       page.getByRole("row", { name: new RegExp(field) }),
     ).toContainText(result);
   }
+  await expect(summary).toContainText("Summary stale");
+  await expect(summary.getByText("Claimed principal (INR)")).toHaveCount(0);
+  await summary
+    .getByRole("button", { name: "Regenerate summary", exact: true })
+    .click();
+  await expect(summary.getByText("Claimed principal (INR)")).toBeVisible();
+  await summary
+    .getByText("Sources and versions", { exact: true })
+    .nth(1)
+    .click();
+  const evidenceSource = summary
+    .getByRole("link", { name: /^evidence/ })
+    .first();
+  const evidenceHref = await evidenceSource.getAttribute("href");
+  await evidenceSource.click();
+  await expect(page.locator(evidenceHref!)).toContainText(
+    "Synthetic Review Bank",
+  );
+  // A change from another session must invalidate the browser-held summary.
+  const identity = await (await page.request.get("/api/v1/me")).json();
+  let lookup = "/api/v1/reviews";
+  let caseId: string | undefined;
+  while (lookup && !caseId) {
+    const queue = await (await page.request.get(lookup)).json();
+    caseId = queue.items.find(
+      (item: { bank_reference: string }) => item.bank_reference === ref,
+    )?.instrument_id;
+    lookup = queue.next_cursor
+      ? `/api/v1/reviews?cursor=${queue.next_cursor}`
+      : "";
+  }
+  expect(caseId).toBeTruthy();
+  const external = await page.request.post(
+    `/api/v1/reviews/${caseId}/discrepancies`,
+    {
+      data: { field: null, message: "External-session observation" },
+      headers: {
+        Origin: "http://localhost:5173",
+        "X-CSRF-Token": identity.csrf_token,
+      },
+    },
+  );
+  expect(external.status()).toBe(201);
+  await page.evaluate(() => window.dispatchEvent(new Event("focus")));
+  await expect(summary).toContainText("Summary stale");
+  await expect(summary.getByText("Claimed principal (INR)")).toHaveCount(0);
+  // Revalidation must not silently regenerate a stale summary.
+  await page.clock.install();
+  await page.clock.fastForward(16000);
+  await page.evaluate(() => window.dispatchEvent(new Event("focus")));
+  await page.waitForLoadState("networkidle");
+  await page
+    .locator(".explanations")
+    .getByText("Source-linked explanations", { exact: true })
+    .click();
+  await page
+    .getByRole("button", { name: "Refresh sources", exact: true })
+    .click();
+  await expect(
+    page.getByText("External-session observation", { exact: true }),
+  ).toBeVisible();
+  await expect(summary).toContainText("Summary stale");
+  await expect(summary.getByText("Claimed principal (INR)")).toHaveCount(0);
+  await summary
+    .getByRole("button", { name: "Regenerate summary", exact: true })
+    .click();
+  await expect(summary.getByText("Claimed principal (INR)")).toBeVisible();
+  // Losing access or connectivity during validation hides summary facts.
+  await page.route("**/api/v1/reviews/*/summary?*", (route) =>
+    route.fulfill({ status: 503, json: { detail: "Validation unavailable" } }),
+  );
+  await page.evaluate(() => window.dispatchEvent(new Event("focus")));
+  await expect(summary.getByRole("alert")).toContainText("Summary hidden");
+  await expect(summary.getByText("Claimed principal (INR)")).toHaveCount(0);
+  await page.unroute("**/api/v1/reviews/*/summary?*");
+  await summary
+    .getByRole("button", { name: "Generate case summary", exact: true })
+    .click();
+  await expect(summary.getByText("Claimed principal (INR)")).toBeVisible();
+  // A blackholed validation must expire instead of keeping facts visible forever.
+  await page.route("**/api/v1/reviews/*/summary?*", () => {});
+  const heldValidation = page.waitForRequest((request) =>
+    request.url().includes("/summary?"),
+  );
+  await page.evaluate(() => window.dispatchEvent(new Event("focus")));
+  await heldValidation;
+  await page.clock.fastForward(10001);
+  await expect(summary.getByRole("alert")).toContainText("timed out");
+  await expect(summary.getByText("Claimed principal (INR)")).toHaveCount(0);
+  await page.unroute("**/api/v1/reviews/*/summary?*");
+  await summary
+    .getByRole("button", { name: "Generate case summary", exact: true })
+    .click();
+  await expect(summary.getByText("Claimed principal (INR)")).toBeVisible();
+  const explanation = page.locator(".explanations");
+  await explanation.evaluate((element) => {
+    (element as HTMLDetailsElement).open = true;
+  });
+  await expect(explanation).toContainText("Rule-based fallback");
+  const maturity = explanation.locator("li", { hasText: "Maturity date" });
+  await expect(maturity).toContainText("differ");
+  await maturity.getByText("Sources and versions", { exact: true }).click();
+  await maturity.getByRole("link", { name: /^Evidence/ }).click();
+  const href = await maturity
+    .getByRole("link", { name: /^Evidence/ })
+    .getAttribute("href");
+  await expect(page.locator(href!)).toContainText("Synthetic Review Bank");
+  await page.screenshot({
+    path: "test-results/explanations.png",
+    fullPage: true,
+  });
   await page.getByRole("button", { name: "Raise observation" }).click();
   await page.getByLabel("Concerning").selectOption({ label: "Maturity date" });
   await page
@@ -297,15 +399,27 @@ test("reviewer compares evidence and resolves an observation with the institutio
   await expect(
     page.getByRole("heading", { name: "Reviewer observations" }),
   ).toBeVisible();
-  await page.getByLabel("Your response").fill("We will obtain a bank letter.");
-  await page.getByRole("button", { name: "Send reply" }).click();
+  await page
+    .locator(".thread", { hasText: "The bank confirms maturity" })
+    .getByLabel("Your response")
+    .fill("We will obtain a bank letter.");
+  await page
+    .locator(".thread", { hasText: "The bank confirms maturity" })
+    .getByRole("button", { name: "Send reply" })
+    .click();
   await expect(page.getByText("We will obtain a bank letter.")).toBeVisible();
   await signOut(page);
 
   await login(page, "reviewer");
   await page.getByRole("button", { name: ref, exact: true }).click();
-  await page.getByLabel("Reply or resolve").fill("Accepted after branch call.");
-  await page.getByRole("button", { name: "Resolve" }).click();
+  await page
+    .locator(".thread", { hasText: "The bank confirms maturity" })
+    .getByLabel("Reply or resolve")
+    .fill("Accepted after branch call.");
+  await page
+    .locator(".thread", { hasText: "The bank confirms maturity" })
+    .getByRole("button", { name: "Resolve", exact: true })
+    .click();
   await expect(page.getByText("Resolved", { exact: true })).toBeVisible();
   await expect(page.getByText("Observation resolved")).toBeVisible();
 });
@@ -337,6 +451,7 @@ test("simulated bank answer is labelled and compared without counting as confirm
     fullPage: true,
   });
   await page.getByRole("button", { name: "Back to review queue" }).click();
+  await loadReviewPages(page);
   await expect(page.getByRole("row", { name: new RegExp(ref) })).toContainText(
     "0 of 5 confirmed",
   );
@@ -629,7 +744,8 @@ async function ensureReleaseAuthority(page: Page) {
 test("replaced FDR is released after clearances and a competent decision", async ({
   page,
 }) => {
-  test.setTimeout(90000);
+  // Three fresh reviewer logins can each wait for the next real TOTP counter.
+  test.setTimeout(180000);
   await ensureReleaseAuthority(page);
   const stamp = Date.now();
   const oldRef = `REL-OLD-${stamp}`;
@@ -734,9 +850,8 @@ test("dashboard tiles drill down to exactly the FDRs they count", async ({
   page,
 }) => {
   await login(page, "alpha");
-  const tile = page.getByRole("button", { name: /^Submitted and active:/ });
-  const label = (await tile.getAttribute("aria-label"))!;
-  const count = Number(label.match(/: (\d+) FDRs/)![1]);
+  const tile = page.getByRole("button", { name: /^Submitted and active/ });
+  const count = Number(await tile.locator("strong").innerText());
   await page.screenshot({ path: "test-results/dashboard.png", fullPage: true });
   await tile.click();
   const dialog = page.getByRole("dialog");
@@ -764,7 +879,7 @@ test("dashboard tiles drill down to exactly the FDRs they count", async ({
   await expect(
     page.getByRole("heading", { name: "Release work" }),
   ).toBeVisible();
-  await expect(page.getByRole("button", { name: /^Drafts:/ })).toHaveCount(0);
+  await expect(page.getByRole("button", { name: /^Drafts/ })).toHaveCount(0);
 });
 
 test("values read from a receipt are applied only after the officer saves", async ({

@@ -140,6 +140,56 @@ export type Discrepancy = {
     created_at: string;
   }[];
 };
+export type ExplanationView = {
+  enabled: boolean;
+  mode: "disabled" | "deterministic_fallback";
+  basis_sha256?: string;
+  version?: string;
+  items: {
+    field: CaseField;
+    label: string;
+    status: Comparison["status"];
+    claimed: string;
+    evidence_value: string | null;
+    document_value: string | null;
+    document_differs: boolean;
+    simulated: boolean;
+    text: string;
+    citations: {
+      kind: "submission" | "evidence" | "extraction";
+      id: string;
+      field: string;
+      href: string;
+      document_id?: string;
+      run_id?: string;
+      extractor?: string;
+      object_version?: string;
+      sha256?: string;
+      page?: number;
+      x?: number;
+      y?: number;
+    }[];
+  }[];
+};
+export type CaseSummaryView = {
+  enabled: boolean;
+  status: "current" | "stale" | "disabled";
+  mode?: "deterministic_fallback";
+  version?: string;
+  basis_sha256?: string;
+  sections: {
+    title: string;
+    text: string;
+    facts: Record<string, string>;
+    citations: {
+      kind: string;
+      id: string;
+      href: string;
+      sha256?: string;
+      object_version?: string;
+    }[];
+  }[];
+};
 export type ReviewCase = {
   instrument_id: string;
   status: "submitted" | "closed";
@@ -147,6 +197,10 @@ export type ReviewCase = {
   submitted_at: string;
   claim: Record<CaseField, string>;
   comparison: Comparison[];
+  explanations: ExplanationView;
+  submission_id: string;
+  row_version: number;
+  summary_state: { enabled: boolean; basis_sha256: string };
   evidence: Evidence[];
   documents: DocumentFile[];
   submitted_documents: { id: string }[];

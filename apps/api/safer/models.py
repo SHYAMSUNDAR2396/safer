@@ -50,6 +50,7 @@ class SessionRow(Base):
     token_hash: Mapped[str] = mapped_column(String(64), primary_key=True)
     user_id: Mapped[UUID] = mapped_column(ForeignKey("users.id"))
     csrf_token: Mapped[str] = mapped_column(String(100))
+    mfa_verified: Mapped[bool] = mapped_column(default=False, server_default="false")
     created_at: Mapped[datetime] = mapped_column(DateTime(timezone=True), server_default=func.now())
     last_seen_at: Mapped[datetime] = mapped_column(
         DateTime(timezone=True), server_default=func.now()
@@ -591,6 +592,30 @@ class ExtractedField(Base):
     x: Mapped[float | None]
     y: Mapped[float | None]
     snippet: Mapped[str] = mapped_column(String(300), default="")
+
+
+class LlmAttempt(Base):
+    """Metadata only; conservative reservations survive ambiguous provider failures."""
+
+    __tablename__ = "llm_attempts"
+    __table_args__ = (
+        CheckConstraint("reserved_microusd >= 0 AND total_tokens >= 0"),
+        CheckConstraint("status IN ('reserved','completed','failed','discarded')"),
+    )
+    id: Mapped[UUID] = mapped_column(primary_key=True, default=uuid4)
+    actor_id: Mapped[UUID] = mapped_column(ForeignKey("users.id"), index=True)
+    instrument_id: Mapped[UUID] = mapped_column(ForeignKey("instruments.id"))
+    purpose: Mapped[str] = mapped_column(String(20))
+    basis_sha256: Mapped[str] = mapped_column(String(64))
+    model: Mapped[str] = mapped_column(String(60))
+    status: Mapped[str] = mapped_column(String(20), default="reserved")
+    reason: Mapped[str] = mapped_column(String(40), default="")
+    reserved_microusd: Mapped[int]
+    total_tokens: Mapped[int] = mapped_column(default=0)
+    duration_ms: Mapped[int] = mapped_column(default=0)
+    created_at: Mapped[datetime] = mapped_column(
+        DateTime(timezone=True), server_default=func.now(), index=True
+    )
 
 
 class AuditEvent(Base):

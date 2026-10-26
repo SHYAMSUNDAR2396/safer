@@ -52,3 +52,24 @@ Migration 015: instrument and release status `closed` (approved → closed trans
 Migration 016: `exports` (owner, metric, status, institution scope fixed at build, object key/version/hash, expiry and purge times). Operational record, not history: exports are deliberately short-lived.
 
 Migration 017: append-only `extraction_runs` (unique per document and extractor version) and `extracted_fields` (proposed or abstained; a proposed field must have a value).
+
+Migration 018: `sessions.mfa_verified` is non-null, default false. Only the validated
+OIDC callback writes verified MFA assurance; old privileged sessions and password-only
+sessions promoted to a privileged role must reauthenticate. No TOTP seeds are stored
+in the application database.
+
+The additive readiness profile uses `safer_readiness_owner` for migrations and
+`safer_readiness_app` at runtime, without superuser/DDL/create-role/create-DB/bypass-RLS.
+Runtime can read/insert required tables, update permitted operational tables, and
+delete sessions only. Existing triggers still enforce immutable history and transitions;
+tenant authorization remains application queries/grants, not a claim of DB RLS.
+Worker/runtime account separation remains a pilot gate. Financial metadata remains
+plaintext at the SQL layer; application object encryption is not DB-at-rest encryption.
+
+The actual local recovery component encrypts a dump and restores into a new isolated
+synthetic DB, comparing table counts. No overwrite, PITR, object/identity/key-loss
+restore or complete RPO/RTO is claimed; see DEPLOYMENT.md and PILOT-READINESS.md.
+
+## Migration 019: LLM attempt ledger
+
+`llm_attempts` records conservative cost reservations and metadata for authorized model calls. No prompt/output text is persisted. Failed/ambiguous attempts retain reservations. Actor/time indexes support limits. Include this ledger in backups; older restores can erase spend records. See [operational constraints](design/LLM-INTEGRATION.md).

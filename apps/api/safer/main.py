@@ -12,6 +12,7 @@ from sqlalchemy import create_engine, text
 from sqlalchemy.exc import SQLAlchemyError
 from starlette.middleware.sessions import SessionMiddleware
 
+from safer.ai import router as ai_router
 from safer.auth import router as auth_router
 from safer.authority import router as authority_router
 from safer.bank import router as bank_router
@@ -52,10 +53,22 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     app.state.settings, app.state.engine = settings, engine
     app.state.s3 = storage_client(settings)
     oauth = OAuth()
+    oidc = {"server_metadata_url": settings.oidc_issuer + "/.well-known/openid-configuration"}
+    if settings.oidc_backchannel:
+        internal = settings.oidc_backchannel.rstrip("/") + "/protocol/openid-connect"
+        # Signed token issuer/public redirect remain public; only backchannel transport changes.
+        oidc = {
+            "issuer": settings.oidc_issuer,
+            "authorization_endpoint": settings.oidc_issuer + "/protocol/openid-connect/auth",
+            "token_endpoint": internal + "/token",
+            "jwks_uri": internal + "/certs",
+            "userinfo_endpoint": internal + "/userinfo",
+            "id_token_signing_alg_values_supported": ["RS256"],
+        }
     oauth.register(
         "portal",
         client_id=settings.oidc_client_id,
-        server_metadata_url=settings.oidc_issuer + "/.well-known/openid-configuration",
+        **oidc,
         client_kwargs={"scope": "openid profile", "code_challenge_method": "S256", "timeout": 10},
     )
     app.state.oauth = oauth
@@ -66,7 +79,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         session_cookie="safer_oidc",
         max_age=600,
         same_site="lax",
-        https_only=False,
+        https_only=settings.app_origin.startswith("https://"),
     )
 
     @app.middleware("http")
@@ -74,6 +87,9 @@ def create_app(settings: Settings | None = None) -> FastAPI:
         request.state.request_id = str(uuid4())
         started = time.monotonic()
         response = await call_next(request)
+        response.headers["Server-Timing"] = (
+            f"app;dur={round((time.monotonic() - started) * 1000, 3)}"
+        )
         response.headers.update(
             {
                 "X-Request-ID": request.state.request_id,
@@ -149,6 +165,7 @@ def create_app(settings: Settings | None = None) -> FastAPI:
     app.include_router(instruments_router)
     app.include_router(documents_router)
     app.include_router(reviews_router)
+    app.include_router(ai_router)
     app.include_router(bank_router)
     app.include_router(deadlines_router)
     app.include_router(notifications_router)

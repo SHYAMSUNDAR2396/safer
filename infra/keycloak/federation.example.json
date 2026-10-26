@@ -1,0 +1,22 @@
+{
+  "note": "DISABLED example only. Approve upstream issuer, client and recovery rules before enabling. Keep MFA in the post-broker flow; never trust an upstream MFA flag without reviewed mapping.",
+  "identityProviders": [{
+    "alias": "approved-external-idp",
+    "providerId": "oidc",
+    "enabled": false,
+    "trustEmail": false,
+    "storeToken": false,
+    "postBrokerLoginFlowAlias": "approved-federated-privileged-stepup",
+    "config": {
+      "clientId": "REPLACE_WITH_APPROVED_CLIENT_ID",
+      "clientSecret": "${vault.federation-client-secret}",
+      "authorizationUrl": "https://identity.example.invalid/authorize",
+      "tokenUrl": "https://identity.example.invalid/token",
+      "jwksUrl": "https://identity.example.invalid/jwks",
+      "issuer": "https://identity.example.invalid",
+      "validateSignature": "true",
+      "useJwksUrl": "true",
+      "defaultScope": "openid"
+    }
+  }]
+}

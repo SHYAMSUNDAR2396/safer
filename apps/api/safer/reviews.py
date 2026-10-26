@@ -1,9 +1,10 @@
 from decimal import Decimal
 from uuid import UUID
 
-from fastapi import APIRouter, Request
-from sqlalchemy import select
+from fastapi import APIRouter, Query, Request
+from sqlalchemy import select, tuple_
 
+from safer import explanations, summaries
 from safer.authority import active
 from safer.deadlines import deadline_view
 from safer.documents import document_view, instrument_documents
@@ -169,17 +170,25 @@ def case_evidence(db, ids):
 
 
 @router.get("/reviews")
-def queue(user: Reviewer, db: DB):
-    # ponytail: oldest 200 waiting cases only; add keyset pagination with the dashboard (SAF-021).
-    rows = db.execute(
+def queue(
+    user: Reviewer, db: DB, limit: int = Query(200, ge=1, le=200), cursor: UUID | None = None
+):
+    query = (
         select(Instrument, Institution, Submission)
         .join(Grant, Grant.institution_id == Instrument.institution_id)
         .join(Institution, Institution.id == Instrument.institution_id)
         .join(Submission, Submission.instrument_id == Instrument.id)
         .where(Grant.user_id == user.id, active("review"), Instrument.status == "submitted")
         .order_by(Submission.created_at, Instrument.id)
-        .limit(200)
-    ).all()
+    )
+    if cursor:
+        anchor = assigned_case(db, user, cursor, closed=True)
+        submitted = db.scalar(select(Submission).where(Submission.instrument_id == anchor.id))
+        query = query.where(
+            tuple_(Submission.created_at, Instrument.id) > tuple_(submitted.created_at, anchor.id)
+        )
+    rows = db.execute(query.limit(limit + 1)).all()
+    has_more, rows = len(rows) > limit, rows[:limit]
     ids = [item.id for item, _, _ in rows]
     records, threads = case_evidence(db, ids), discrepancy_views(db, ids)
     escalated = set(
@@ -212,7 +221,7 @@ def queue(user: Reviewer, db: DB):
                 ),
             }
         )
-    return {"items": items}
+    return {"items": items, "next_cursor": str(rows[-1][0].id) if has_more else None}
 
 
 def release_views(db, item) -> list[dict]:
@@ -227,18 +236,23 @@ def release_views(db, item) -> list[dict]:
 
 
 @router.get("/reviews/{id}")
-def case(id: UUID, user: Reviewer, db: DB):
+def case(id: UUID, request: Request, user: Reviewer, db: DB):
     item = assigned_case(db, user, id, closed=True)
     sub = db.scalar(select(Submission).where(Submission.instrument_id == id))
     institution = db.get(Institution, item.institution_id)
     records = case_evidence(db, [id])
     docs, states, current = instrument_documents(db, item)
-    return {
+    data = {
         "instrument_id": str(id),
         "status": item.status,
         "institution": {"id": str(institution.id), "name": institution.name},
+        "submission_id": str(sub.id),
+        "row_version": item.row_version,
         "submitted_at": sub.created_at.isoformat(),
         "claim": {field: sub.snapshot[field] for field in FIELDS},
+        "explanations": explanations.build(db, sub, records, docs, states, comparison)
+        if request.app.state.settings.explanations_enabled
+        else explanations.disabled(),
         "comparison": comparison(
             sub.snapshot,
             records,
@@ -255,6 +269,31 @@ def case(id: UUID, user: Reviewer, db: DB):
         "coverage": coverage_view(db, db.get(Obligation, item.obligation_id)),
         "audit": audit_items(db, item),
     }
+
+    data["summary_state"] = summaries.state(data, request.app.state.settings.summaries_enabled)
+    return data
+
+
+@router.get("/reviews/{id}/summary")
+def summarize(
+    id: UUID,
+    request: Request,
+    user: Reviewer,
+    db: DB,
+    basis_sha256: str | None = Query(default=None, pattern="^[0-9a-f]{64}$"),
+):
+    # Recheck current role and assignment on every generation and revalidation.
+    return summaries.build(case(id, request, user, db), basis_sha256)
+
+
+@router.get("/reviews/{id}/explanations")
+def explain(id: UUID, request: Request, user: Reviewer, db: DB):
+    item = assigned_case(db, user, id, closed=True)
+    if not request.app.state.settings.explanations_enabled:
+        return explanations.disabled()
+    sub = db.scalar(select(Submission).where(Submission.instrument_id == id))
+    docs, states, _ = instrument_documents(db, item)
+    return explanations.build(db, sub, case_evidence(db, [id]), docs, states, comparison)
 
 
 @router.post("/reviews/{id}/evidence", status_code=201)

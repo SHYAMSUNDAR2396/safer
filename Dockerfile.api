@@ -1,0 +1,18 @@
+FROM python:3.14-alpine@sha256:601e99e090cb08c2784a42395487709500bc39930307fe72f3f11a8f3c430762 AS base
+RUN apk upgrade --no-cache && python -m pip uninstall -y pip
+FROM ghcr.io/astral-sh/uv:0.11.16@sha256:440fd6477af86a2f1b38080c539f1672cd22acb1b1a47e321dba5158ab08864d AS uv
+FROM base AS build
+COPY --from=uv /uv /usr/local/bin/uv
+WORKDIR /app
+COPY pyproject.toml uv.lock ./
+RUN uv sync --locked --no-dev --no-install-project
+FROM base AS runtime
+WORKDIR /app
+COPY --from=build /app/.venv /app/.venv
+COPY apps/api ./apps/api
+COPY alembic.ini ./alembic.ini
+ENV PYTHONPATH=/app/apps/api PATH=/app/.venv/bin:$PATH SAFER_SECRETS_DIR=/run/secrets PYTHONDONTWRITEBYTECODE=1
+USER 10001:10001
+EXPOSE 8000
+HEALTHCHECK --interval=15s --timeout=5s CMD python -c "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health/ready',timeout=3)"
+CMD ["uvicorn", "safer.main:app", "--host", "0.0.0.0", "--port", "8000", "--no-access-log", "--no-proxy-headers"]

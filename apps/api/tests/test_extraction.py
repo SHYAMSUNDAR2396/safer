@@ -156,3 +156,14 @@ def test_unreadable_pdf_fails_safely(clients, actors, db, s3, settings, monkeypa
     assert data["status"] == "failed"
     assert db.scalar(select(func.count()).select_from(ExtractionRun)) == 1
     assert db.get(Document, doc["id"]).status == "quarantined"
+
+
+def test_amount_proposals_never_truncate_precision_or_exceed_storage_range():
+    for raw in ["765432.109", "12345678901234567890.00", "12,34.56", "0.00"]:
+        result = extraction.extract([[1, 48, 700, f"Principal Amount: INR {raw}"]])
+        amount = next(p for p in result if p["field"] == "principal_amount")
+        assert amount["status"] == "abstained" and amount["value"] is None, raw
+    for raw in ["0.01", "7,65,432.10", "765,432.10", "9999999999999999.99"]:
+        result = extraction.extract([[1, 48, 700, f"Principal Amount: INR {raw}"]])
+        amount = next(p for p in result if p["field"] == "principal_amount")
+        assert amount["status"] == "proposed" and amount["value"] == raw.replace(",", "")

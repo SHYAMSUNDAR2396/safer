@@ -1,0 +1,50 @@
+# LOCAL synthetic readiness. Required inputs are paths/UIDs, never secret values.
+services:
+  app:
+    image: safer-api:local-readiness
+    build: {context: ., dockerfile: Dockerfile.api}
+    user: "${SAFER_LOCAL_UID:?Set your non-root UID}:${SAFER_LOCAL_GID:?Set your GID}"
+    environment:
+      APP_MODE: local
+      LOCAL_TRANSPORT: compose
+      APP_ORIGIN: https://localhost:9443
+      OIDC_ISSUER: http://localhost:8090/realms/safer
+      OIDC_BACKCHANNEL: http://identity:8080/realms/safer
+      S3_ENDPOINT: http://objects:8333
+      S3_BUCKET: safer-readiness-encrypted
+      SMTP_HOST: mail
+      CLAMD_HOST: scan-relay
+      QUEUE_HOST: queue
+      REDIS_DB: 1
+      OBJECT_ENCRYPTION: transit
+      TRANSIT_ADDRESS: http://key-service:8200
+      TRANSIT_TOKEN_FILE: /run/secrets/transit-token
+    volumes:
+      - ${SAFER_PRIVATE_DIR:?Run scripts/readiness_profile.py}/app-secrets:/run/secrets:ro
+    cap_drop: [ALL]
+    read_only: true
+    tmpfs: [/tmp]
+    security_opt: [no-new-privileges:true]
+    mem_limit: 512m
+  web-readiness:
+    image: safer-web:local-readiness
+    build: {context: ., dockerfile: Dockerfile.web}
+    user: "${SAFER_LOCAL_UID}:${SAFER_LOCAL_GID}"
+    ports: ["127.0.0.1:9443:8443"]
+    volumes:
+      - ${SAFER_PRIVATE_DIR}/tls:/run/secrets:ro
+    depends_on: [app]
+    cap_drop: [ALL]
+    read_only: true
+    tmpfs: [/tmp]
+    security_opt: [no-new-privileges:true]
+    mem_limit: 256m
+
+  readiness-worker:
+    extends: {service: app}
+    command: ["celery", "-A", "safer.worker", "worker", "--pool=threads", "--concurrency=2", "--loglevel=warning"]
+    healthcheck: {disable: true}
+  readiness-relay:
+    extends: {service: app}
+    command: ["python", "-m", "safer.jobs"]
+    healthcheck: {disable: true}

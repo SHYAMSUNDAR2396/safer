@@ -27,11 +27,11 @@ from safer.scanning import scan_states
 from safer.security import DB, Actor
 
 router = APIRouter(prefix="/api/v1")
-VERSION = "text-rules-1"
+VERSION = "text-rules-2"
 DATE = r"(\d{2}[/-]\d{2}[/-]\d{4}|\d{4}-\d{2}-\d{2})"
 RULES = {
     "bank_reference": r"(?:FDR|Deposit|Receipt)\s*(?:No\.?|Number|Ref(?:erence)?)\s*[:#]?\s*([A-Z0-9][A-Z0-9/-]{3,40})",
-    "principal_amount": r"(?:Principal(?: Amount)?|Deposit Amount|Amount)\s*:?\s*(?:Rs\.?|INR|₹)?\s*([0-9][0-9,]*(?:\.[0-9]{1,2})?)",
+    "principal_amount": r"(?:Principal(?: Amount)?|Deposit Amount|Amount)\s*:?\s*(?:Rs\.?|INR|₹)?\s*([0-9][0-9,.]*)",
     "issue_date": rf"(?:Date of Deposit|Issue Date|Deposit Date)\s*:?\s*{DATE}",
     "maturity_date": rf"(?:Maturity Date|Date of Maturity|Due Date)\s*:?\s*{DATE}",
     "bank_name": r"Bank Name\s*:\s*([A-Za-z][A-Za-z .&'-]{2,118})",
@@ -45,11 +45,16 @@ def text_lines(data: bytes):
 def normalise(field: str, raw: str) -> str:
     """Canonical value, or ValueError if the text does not form a valid value."""
     if field == "principal_amount":
+        if not re.fullmatch(
+            r"(?:[0-9]+|[1-9][0-9]{0,2}(?:,[0-9]{3})+|[1-9][0-9]?(?:,[0-9]{2})*,[0-9]{3})(?:\.[0-9]{1,2})?",
+            raw,
+        ):
+            raise ValueError
         try:
             value = Decimal(raw.replace(",", ""))
         except InvalidOperation:
             raise ValueError from None
-        if value <= 0:
+        if value <= 0 or value > Decimal("9999999999999999.99"):
             raise ValueError
         return f"{value:.2f}"
     if field.endswith("_date"):

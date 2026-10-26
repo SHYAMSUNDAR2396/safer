@@ -52,6 +52,31 @@ def test_queue_holds_only_submitted_cases_of_assigned_institutions(clients, acto
     assert reviewer.post("/api/v1/instruments", json=payload(actors)).status_code == 403
 
 
+def test_queue_pages_without_hidden_cases_and_rechecks_anchor_authority(clients, actors, db):
+    alpha, beta, reviewer = clients(), clients("beta"), clients("reviewer")
+    cases = [submitted(alpha, actors) for _ in range(5)]
+    foreign = submitted(beta, actors, owner=1)
+    pending = draft(alpha, actors)
+    first = reviewer.get("/api/v1/reviews?limit=2").json()
+    assert len(first["items"]) == 2
+    seen, cursor = [q["instrument_id"] for q in first["items"]], first["next_cursor"]
+    while cursor:
+        page = reviewer.get("/api/v1/reviews", params={"limit": 2, "cursor": cursor}).json()
+        seen.extend(q["instrument_id"] for q in page["items"])
+        cursor = page["next_cursor"]
+    assert seen == [c["id"] for c in cases] and len(set(seen)) == 5
+    assert reviewer.get("/api/v1/reviews", params={"cursor": foreign["id"]}).status_code == 404
+    assert reviewer.get("/api/v1/reviews", params={"cursor": pending["id"]}).status_code == 404
+    for params in ({"limit": 0}, {"limit": 201}, {"cursor": "broken"}):
+        assert reviewer.get("/api/v1/reviews", params=params).status_code == 422
+    grant = db.scalar(select(Grant).where(Grant.user_id == actors["reviewer"].id))
+    grant.status = "revoked"
+    db.commit()
+    assert (
+        reviewer.get("/api/v1/reviews", params={"cursor": first["next_cursor"]}).status_code == 404
+    )
+
+
 def test_evidence_is_kept_apart_from_claims_and_compared_by_code(clients, actors):
     alpha, reviewer = clients(), clients("reviewer")
     case = submitted(alpha, actors)

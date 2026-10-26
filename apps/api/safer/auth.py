@@ -11,6 +11,11 @@ from safer.security import DB, Actor, audit, issue_session, token_hash
 router = APIRouter()
 
 
+def has_mfa_assurance(claims: dict) -> bool:
+    # Claims are from Authlib-validated signed ID tokens, never request/user attributes.
+    return claims.get("acr") == "2"
+
+
 @router.get("/auth/login")
 async def login(request: Request):
     request.session.clear()
@@ -50,12 +55,19 @@ async def callback(request: Request, db: DB):
         raise Problem(
             403, "not_provisioned", "An administrator must provision this account before access."
         )
+    verified_mfa = has_mfa_assurance(claims)
+    if user.role in {"reviewer", "admin"} and not verified_mfa:
+        raise Problem(
+            403,
+            "mfa_required",
+            "Privileged accounts must complete the configured second factor before access.",
+        )
     old = request.cookies.get("safer_session")
     if old:
         old_row = db.get(SessionRow, token_hash(old))
         if old_row:
             db.delete(old_row)
-    opaque, _ = issue_session(db, user)
+    opaque, _ = issue_session(db, user, mfa_verified=verified_mfa)
     audit(db, request, user, "session.started")
     db.commit()
     response = RedirectResponse("/", status_code=303)
@@ -64,7 +76,7 @@ async def callback(request: Request, db: DB):
         opaque,
         httponly=True,
         samesite="lax",
-        secure=False,
+        secure=request.app.state.settings.app_origin.startswith("https://"),
         max_age=28800,
         path="/",
     )

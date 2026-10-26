@@ -169,7 +169,7 @@ export function Overview({
                     key={m.key}
                     className={`metric${flagged ? " flagged" : ""}`}
                     onClick={() => open(m.key)}
-                    aria-label={`${m.label}: ${m.count} FDRs, ${money(m.amount)}. Show list`}
+                    title="Show list"
                   >
                     <span className="metric-label">
                       {flagged && <AlertTriangle size={14} aria-hidden />}

@@ -1,0 +1,28 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <title>AI component test</title>
+  </head>
+  <body>
+    <div id="root"></div>
+    <script type="module">
+      import React from "react";
+      import { createRoot } from "react-dom/client";
+      import { AiAssistance } from "../src/AiAssistance";
+      const root = createRoot(document.getElementById("root"));
+      function render(basis) {
+        root.render(
+          React.createElement(AiAssistance, {
+            id: "synthetic-case",
+            csrf: "synthetic-csrf",
+            source: basis ? { enabled: true, basis_sha256: basis } : null,
+            refresh: () => {},
+          }),
+        );
+      }
+      window.renderAi = render;
+      render("a".repeat(64));
+    </script>
+  </body>
+</html>

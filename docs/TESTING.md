@@ -120,3 +120,83 @@ CI workflow repeats build, lint, migrations, API tests and browser tests using e
 
 - API suite: **222 passed** (8 new): positioned proposals from a real text-layer PDF; ambiguous and missing fields abstain; an impossible date abstains instead of guessing; images fall back to manual entry; unscanned documents are never parsed (409); access inherits the document (beta 404, auditor allowed, reviewer only on reviewable cases); proposals never change the claim or create evidence, and reviewers see a differing extracted value flagged; unreadable text layer fails safely.
 - Playwright: **13 passed**; new scenario: a draft with a wrong amount, a real receipt upload, the clean scan and extraction jobs, proposals shown with page and source line, values applied through the edit form, and the amount changing only after Save. Screenshot review fixed field labels breaking onto separate lines.
+
+## Recorded results — SAF-024 fallback, 24 October 2026
+
+- Full API suite: **229 passed in 60.50s**, real dedicated PostgreSQL test database/object store/ClamAV. Seven new tests cover code-determined mismatch with exact citations, new-evidence basis changes, wrong-role/scope/revocation denial, independent disable with manual comparison retained, simulated evidence boundaries, frozen document version/hash/run/page provenance and instruction-like evidence notes treated only as data. Initial RED: seven missing-route failures.
+- Playwright: **13 passed (1.3m)** against the real local API, Keycloak and jobs. Extended the reviewer workflow to open explanations, inspect the mismatch, expand source versions and follow the evidence link to the exact log entry. Initial RED: no explanation UI. A later locator failure was corrected by opening the collapsed source disclosure before clicking its link. Full-page `apps/web/test-results/explanations.png` inspected.
+- TypeScript + Vite build, Ruff checks/format (71 Python files), Prettier and `git diff --check`: pass. OpenAPI snapshot regenerated from the implemented application.
+- Independent read-only review: no important findings. No production security/load test, model evaluation or remote AI/provider integration is claimed. This verifies the labelled deterministic fallback, not model-generated FR14 wording. Source cache is not persisted; a case refresh recomputes its basis. Deliberate no-model decision is recorded in SAF-024-PLAN.md.
+
+## Recorded results — SAF-025 local summaries, 24 October 2026
+
+- Final full API suite: **239 passed in 78.05s** against dedicated PostgreSQL/object storage/ClamAV. Ten summary tests cover exact financial strings and dates, stable material digest, evidence and observation invalidation, wrong roles/scope/revoked assignment, independent disable, simulator exclusion, instruction-like notes, malformed digest, frozen document citations and audit-only reads, release/monitoring changes. Initial RED: eight missing-route failures. Extended fixtures were corrected to require the certificate and use the existing hold endpoint's 200 response.
+- Final real-Keycloak Playwright suite: **13 passed (1.4m)**. Reviewer workflow covers generation, source navigation, local evidence changes, an authenticated external-session change, persistent stale state across repeated focus/source refresh, explicit regeneration, unavailable validation and a held validation request. Original UI RED: absent Generate button; sticky-stale RED reproduced automatic restoration; review-finding RED reproduced missing timeout. All are green in the final run.
+- Independent read-only review found one important issue: unbounded validation could retain visible facts on a hanging request. Fixed with a **10-second timeout**, cancellation and hidden facts; held-request test RED→GREEN and full suites green. No other important/critical findings. Deferred minor: browser reload needed after a disabled snapshot is re-enabled.
+- TypeScript/Vite production build, Ruff lint and format (71 files), Prettier and `git diff --check`: passed. OpenAPI snapshot regenerated. Full-page reviewer screenshot inspected for readable summary cards and resolvable source disclosures.
+- Local deterministic/advisory scope only: no model, external AI transfer, persisted summary history, production load/security certification or real bank integration is claimed. SAF-026 evaluation remains next.
+
+## SAF-026–032 local readiness protocol
+
+Use only the dedicated test DB/bucket for API tests, the original labelled synthetic
+demo for workflow tests and the isolated readiness profile for HTTPS/encryption/drills.
+Serialize DB test suites; do not run the evaluation security subprocess concurrently
+with the full API suite. Browser commands must run from `apps/web`, because private
+fixture paths are relative to that directory. The MFA helper may wait for a fresh
+30-second TOTP counter; this exercises real replay prevention rather than disabling it.
+
+```sh
+uv run pytest -q
+PYTHONPATH=apps/api uv run python -m safer.evaluation --security --output .local/evaluation/saf026-final
+uv run ruff check apps/api scripts
+uv run ruff format --check apps/api scripts
+(cd apps/web && npm run build && npm run format:check)
+(cd apps/web && npx playwright install chromium && npx playwright test)
+(cd apps/web && npx playwright test --config playwright.readiness.config.ts)
+PYTHONPATH=apps/api uv run python scripts/readiness_evidence.py
+./scripts/security_scan.sh
+```
+
+Run the two browser suites sequentially: they share local Keycloak fixture identities.
+Start the current API/relay/worker/frontend and readiness containers first; refresh
+the one-hour Transit token as documented in DEPLOYMENT.md. Restore component and
+capacity commands create new scratch databases and preserve them for inspection:
+
+```sh
+PYTHONPATH=apps/api uv run python -m safer.local_drills audit
+PYTHONPATH=apps/api uv run python -m safer.local_drills recovery
+PYTHONPATH=apps/api uv run python -m safer.capacity
+```
+
+Source-secret scanning is a separate invocation from the image/dependency/SBOM script.
+It deliberately excludes generated/private files, dependency caches and Git metadata;
+this is not proof that excluded private files contain no secrets. Do not publish raw
+scanner matches. The locally executed command/evidence is:
+
+```sh
+docker run --rm -v "$PWD:/source:ro" aquasec/trivy:0.76.0 fs --scanners secret --exit-code 1 --skip-dirs /source/.git,/source/.venv,/source/.local,/source/apps/web/node_modules --skip-files /source/.env --format json /source > .local/saf031-source-scan.json
+```
+
+Hosted CI definitions include backend/browser/evaluation and separate security builds,
+but hosted runs are not claimed. See PILOT-READINESS.md for independent-assessment,
+provenance, rollback and representative-acceptance gaps.
+
+
+## Recorded readiness results — 25 October 2026
+
+- Final complete API suite: **272 passed in 76.63s** against dedicated PostgreSQL/object-store/scanner fixtures. Includes privileged session/role-promotion MFA boundaries, encryption context/tamper/legacy rejection, metric/evidence gates, safe restore names, redacted alerts and scoped queue pagination.
+- Final complete workflow browser suite: **13 passed in 6.1m**, actual local Keycloak/TOTP, API, PostgreSQL, objects, relay and worker. Covers source-linked/stale summaries, simulated evidence boundaries, renewal, dual-control release through matched closure, dashboard/export and extraction. Accumulated >200-case inventory exercises Load more cases and secondary-session paginated lookup. Real TOTP replay prevention increases test time; MFA was not bypassed.
+- Final separate HTTPS/readiness browser suite: **2 passed in 7.5s** on final container images: encrypted upload/scan/submission, Secure session cookie, privileged TOTP review/summary; automated axe/WCAG and keyboard register/dialog checks. Exact TLS trust-anchor, encrypted version/hash and DB permission checks separately passed. Automated checks are not full accessibility certification. Reviewer screenshots inspected for layout/source readability; no credential screens are published.
+- Evaluation: **138 synthetic documents, 12 review cases, 26 independently collected/executed safety tests**, zero wrong proposals/parser/summary/citation errors and comparison precision/recall 1.0 on this corpus. Scans have manual fallback/zero extracted coverage. The corpus is regression data, not representative held-out acceptance. Latest measured timings/provenance are in evaluation/SAF-026-RESULTS.md and .local/evaluation/saf026-final.
+- Python dependency audit: **0 known findings**, after Pillow13 security upgrade. Node audit: **0 findings at every severity**. Final API/web runtime scans: **0 HIGH/CRITICAL findings**; API/web CycloneDX SBOMs and image/archive correspondence recorded. Final source-secret scan: **0 findings in its declared scope**. Raw matches/private files are excluded from published artifacts. These describe the actual scanned versions/database at execution, not future vulnerability absence.
+- TypeScript/Vite build, Ruff lint and format (**91 Python files**), Prettier and diff whitespace checks passed. OpenAPI regenerated, including reviewer cursor/limit parameters. Hosted CI was prepared, not run; no signed build attestation or independent security assessment is claimed.
+- One independent read-only review found two important evaluation gaps (incomplete JUnit and misplaced section/release citations). Both had failing reproductions, fixes and a green complete suite. Later integration found/fixed the older queue truncation, with dedicated RED→GREEN scope/pagination regression and full API/browser passes. No second review was dispatched.
+- After all browser runs, removed only explicitly labelled test-owned OTP factors on four fixed synthetic accounts and revoked their app/IdP sessions. Personal factors were preserved; required MFA remains. Next human privileged login enrolls its own authenticator. No real identity was reset.
+
+Local component evidence also verifies six Mailpit-capture alert rules, encrypted DB dump/isolated restore, and the declared 1,000-request scoped workload (49.99 arrival / 49.94 completion RPS, p95 reads 30.601ms/writes 29.166ms). **Full DR, independent assessment/rollback and sponsor acceptance remain incomplete.** Read PILOT-READINESS.md for every gate and the two deferred minor improvements. No real/anonymized receipts, cloud provider APIs, publication or production activation.
+
+## Optional LLM tests
+
+Run `.venv/bin/pytest apps/api/tests/test_llm.py apps/api/tests/test_ai.py -q`, then the full `.venv/bin/pytest -q` suite. Apply migration 019 to the dedicated test database first. With Vite running, run `npx playwright test e2e/ai.spec.ts` from `apps/web`. These use simulated provider HTTP and real database/React behavior; they do not establish live model accuracy. The existing deterministic evaluation results remain separate. See [live evaluation gates](design/LLM-INTEGRATION.md).
+
+26 October 2026 LLM integration evidence: full backend suite 311 passed (66.45s); full main browser suite 15 passed (5.0m); frontend build/format and backend lint/format passed. Independent review findings on malformed usage metadata and nested pool checkouts were reproduced and fixed. The main browser suite includes two AI component tests; external model quality remains untested and inference remains off.

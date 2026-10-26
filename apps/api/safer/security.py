@@ -18,7 +18,7 @@ def token_hash(token: str) -> str:
     return hashlib.sha256(token.encode()).hexdigest()
 
 
-def issue_session(db: Session, user: User) -> tuple[str, str]:
+def issue_session(db: Session, user: User, *, mfa_verified: bool = False) -> tuple[str, str]:
     token, csrf = secrets.token_urlsafe(32), secrets.token_urlsafe(32)
     now = datetime.now(UTC)
     db.add(
@@ -26,6 +26,7 @@ def issue_session(db: Session, user: User) -> tuple[str, str]:
             token_hash=token_hash(token),
             user_id=user.id,
             csrf_token=csrf,
+            mfa_verified=mfa_verified,
             created_at=now,
             last_seen_at=now,
         )
@@ -48,6 +49,12 @@ def current_user(request: Request, db: DB) -> User:
     user = db.scalar(select(User).where(User.id == row.user_id, User.active.is_(True)))
     if not user:
         raise Problem(401, "authentication_required", "This account no longer has access.")
+    if user.role in {"reviewer", "admin"} and not row.mfa_verified:
+        raise Problem(
+            401,
+            "mfa_required",
+            "Sign in again and complete the second factor for privileged access.",
+        )
     request.state.session_hash = row.token_hash
     request.state.csrf_token = row.csrf_token
     if request.method not in {"GET", "HEAD", "OPTIONS"}:
