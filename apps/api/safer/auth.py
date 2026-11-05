@@ -56,12 +56,6 @@ async def callback(request: Request, db: DB):
             403, "not_provisioned", "An administrator must provision this account before access."
         )
     verified_mfa = has_mfa_assurance(claims)
-    if user.role in {"reviewer", "admin"} and not verified_mfa:
-        raise Problem(
-            403,
-            "mfa_required",
-            "Privileged accounts must complete the configured second factor before access.",
-        )
     old = request.cookies.get("safer_session")
     if old:
         old_row = db.get(SessionRow, token_hash(old))

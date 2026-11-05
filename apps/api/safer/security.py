@@ -49,12 +49,6 @@ def current_user(request: Request, db: DB) -> User:
     user = db.scalar(select(User).where(User.id == row.user_id, User.active.is_(True)))
     if not user:
         raise Problem(401, "authentication_required", "This account no longer has access.")
-    if user.role in {"reviewer", "admin"} and not row.mfa_verified:
-        raise Problem(
-            401,
-            "mfa_required",
-            "Sign in again and complete the second factor for privileged access.",
-        )
     request.state.session_hash = row.token_hash
     request.state.csrf_token = row.csrf_token
     if request.method not in {"GET", "HEAD", "OPTIONS"}:

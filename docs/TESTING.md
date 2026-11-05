@@ -142,8 +142,9 @@ Use only the dedicated test DB/bucket for API tests, the original labelled synth
 demo for workflow tests and the isolated readiness profile for HTTPS/encryption/drills.
 Serialize DB test suites; do not run the evaluation security subprocess concurrently
 with the full API suite. Browser commands must run from `apps/web`, because private
-fixture paths are relative to that directory. The MFA helper may wait for a fresh
-30-second TOTP counter; this exercises real replay prevention rather than disabling it.
+fixture paths are relative to that directory. Current demo login is password-only
+for every role; `e2e/password-login.spec.ts` verifies all seven saved demo credentials.
+The TOTP results recorded below are historical and do not describe current login behavior.
 
 ```sh
 uv run pytest -q

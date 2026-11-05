@@ -1,13 +1,17 @@
 # SAFER local readiness and pilot gates
 
-Updated 25 October 2026 (measurements began 24 October). **Synthetic data only. Every real-data pilot gate remains blocked.**
+Updated 27 October 2026 (measurements began 24 October). **Synthetic data only. Every real-data pilot gate remains blocked.**
 This report separates implemented local controls from evidence that requires AICTE,
 an independent assessor or the selected hosting platform. `APP_MODE` still accepts
 only `local`. The gate ledger is a planning record, not an attestation or activation API.
 
+Current demo login uses fixed passwords from `.local/demo-users.json` for every role.
+Two-step authentication and per-request MFA assurance were removed on 27 October.
+Earlier TOTP measurements below are historical evidence, not current controls.
+
 ## Decisions and assumptions
 
-The user approved portable Docker/Compose packaging, Keycloak with privileged TOTP,
+The earlier readiness scope included portable Docker/Compose packaging, Keycloak with privileged TOTP,
 an OpenBao Transit adapter, and synthetic-only evaluation. No hosting provider,
 external identity provider, KMS/HSM or real/anonymized FDR dataset is selected.
 Any real or anonymized FDR needs **written approval from AICTE's data owner first**.
@@ -26,7 +30,7 @@ enrollment, claim-assurance, revocation and recovery tests before use.
 | Phase | Implemented and measured locally | Evidence still required for pilot |
 |---|---|---|
 | SAF-026 | Offline evaluation: 138 synthetic documents, 12 review cases; zero wrong proposals, 264 exact summary facts and 69 source citations checked; 26 API safety regressions | Approved representative holdout, accuracy/utility thresholds and human baseline |
-| SAF-027 | HTTPS front door, privileged Keycloak TOTP/LoA2, session assurance, context-bound AES-256-GCM envelopes, restricted DB runtime role, non-root/read-only API/web containers | Hosting/residency, public certificate chain, encrypted internal links/volumes, separate worker/storage permissions, parser filesystem/credential/egress isolation, independent key custody/workload identity |
+| SAF-027 | HTTPS front door, password-only Keycloak demo login (earlier TOTP/LoA2 evidence is historical), context-bound AES-256-GCM envelopes, restricted DB runtime role, non-root/read-only API/web containers | Hosting/residency, public certificate chain, encrypted internal links/volumes, separate worker/storage permissions, parser filesystem/credential/egress isolation, independent key custody/workload identity |
 | SAF-028 | Encrypted minimal audit projection, separate checkpoint integrity checks, six redacted alert rules delivered to local Mailpit capture | Independent immutable destination, retention/holds, real SIEM connectors and named responders |
 | SAF-029 | Actual encrypted PostgreSQL backup, decrypt and restore into a new scratch DB; 30 table counts/41 rows reconciled in the recorded fixture | PITR, exact object-version restore, identity/key-loss recovery, independent administrator, whole-system RPO/RTO and incident tabletop |
 | SAF-030 | 10k institutions/100k initial FDRs; 1,000 scoped API requests, 800 reads/200 writes; 49.99 arrival RPS/49.94 completion RPS; p95 read 30.601ms/write 29.166ms; zero unexpected/server errors | Full-portfolio and transport workload, file/queue/login performance, quotas and upstream DDoS/origin controls |
@@ -81,18 +85,15 @@ checkout and `.env`; API/worker mounts contain runtime files only, web mounts TL
 files only. Operator recovery keys never enter application mounts. Local single-user
 custody is a demonstration, not separation of administration.
 
-Privileged users must carry the Keycloak `safer-mfa-required` role. Keycloak enforces
-TOTP and signed ID-token `acr=2`; the API checks that assurance at callback and on
-every privileged session use. The app's reviewer plus explicit release grant covers
-approvers. Missing assurance denies access rather than silently falling back to a
-password. Federation is disabled realm configuration until an approved provider exists.
+All current demo roles use the password-only Keycloak browser flow. The API validates
+OIDC identity and active membership and enforces role/grant permissions, without
+requiring MFA assurance. Federation remains disabled. Existing OTP credentials are
+preserved but are not requested; the setup command clears pending TOTP enrollment
+and synchronizes passwords from the private demo-user file.
 
-Browser checks enroll explicitly labelled synthetic test factors. After all checks,
-`reset_synthetic_test_mfa.py --synthetic-fixtures-only` removes only those labelled
-factors on four fixed local test identities and revokes their local sessions. It
-preserves personal/unknown factors and keeps MFA required. A person signing in next
-enrolls their own authenticator; generated passwords remain in the private demo-user
-file. Never run automated fixture enrollment against a real account.
+Earlier browser checks enrolled explicitly labelled synthetic test factors. The
+historical `reset_synthetic_test_mfa.py --synthetic-fixtures-only` cleanup tool is
+unnecessary for password-only login. Demo accounts do not enroll an authenticator.
 
 ## Independent review disposition
 

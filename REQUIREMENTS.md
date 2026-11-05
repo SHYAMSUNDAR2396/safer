@@ -234,8 +234,8 @@ Summary revalidation has a 10-second timeout; expired validation hides facts and
   timing and real executed safety-suite evidence. Required test identities and exact
   per-section source/version checks must fail on partial, duplicate or misplaced data.
   Corrected synthetic regression results cannot certify representative accuracy/utility.
-- Portable local HTTPS containers, Keycloak TOTP for reviewers/approvers/admins,
-  per-request session assurance, restricted migration/runtime DB roles and context-bound
+- Portable local HTTPS containers, Keycloak password-only login for every demo role,
+  per-request active membership/role checks, restricted migration/runtime DB roles and context-bound
   encrypted object envelopes behind a provider-neutral key interface. New encryption
   keys/recovery material stay outside `.env` and repo. External federation is disabled
   configuration; OpenBao Transit is the local adapter, not a cloud KMS selection.

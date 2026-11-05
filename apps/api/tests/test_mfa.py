@@ -1,25 +1,47 @@
+from unittest.mock import AsyncMock
+
+import pytest
 from safer.models import SessionRow
 from sqlalchemy import select
 
 
-def test_privileged_password_only_session_is_rejected(clients, db):
-    c = clients("reviewer")
+@pytest.mark.parametrize(
+    "name", ["alpha", "beta", "auditor", "reviewer", "reviewer2", "admin1", "admin2"]
+)
+def test_every_demo_role_accepts_password_only_session(clients, db, name):
+    c = clients(name)
     row = db.scalar(select(SessionRow))
     row.mfa_verified = False
     db.commit()
     r = c.get("/api/v1/me")
-    assert r.status_code == 401 and r.json()["code"] == "mfa_required"
+    assert r.status_code == 200
+    assert r.json()["display_name"] == name
 
 
-def test_institution_session_does_not_gain_privileged_access(clients, actors, db):
+def test_password_only_institution_session_keeps_role_restrictions(clients, actors, db):
     c = clients()
     row = db.scalar(select(SessionRow))
     row.mfa_verified = False
     db.commit()
     assert c.get("/api/v1/me").status_code == 200
-    actors["alpha"].role = "reviewer"
-    db.commit()
-    assert c.get("/api/v1/reviews").status_code == 401
+    assert c.get("/api/v1/reviews").status_code == 403
+
+
+@pytest.mark.parametrize("name", ["reviewer", "reviewer2", "admin1", "admin2"])
+def test_password_only_oidc_callback_creates_privileged_session(
+    clients, actors, db, name, monkeypatch
+):
+    c = clients(name)
+    user = actors[name]
+    monkeypatch.setattr(
+        c.app.state.oauth.portal,
+        "authorize_access_token",
+        AsyncMock(return_value={"userinfo": {"iss": user.issuer, "sub": user.subject, "acr": "1"}}),
+    )
+    response = c.get("/auth/callback", follow_redirects=False)
+    assert response.status_code == 303
+    assert c.get("/api/v1/me").status_code == 200
+    assert db.scalar(select(SessionRow)).mfa_verified is False
 
 
 def test_only_explicit_verified_mfa_assurance_is_accepted():

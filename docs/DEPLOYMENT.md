@@ -7,7 +7,7 @@ No public deployment, hosting selection or Kubernetes cluster was created.
 
 ## Original local demo
 
-Follow README setup, migrate to head, seed, synchronize identities and configure MFA:
+Follow README setup, migrate to head, seed, synchronize identities and configure password-only demo login:
 
 ```sh
 uv run python scripts/sync_identity.py
@@ -17,9 +17,10 @@ uv run python scripts/configure_mfa.py
 Keep the API, relay and Celery worker running. The relay schedules monitoring and
 reconciles queued jobs; a second standalone scanning daemon is unnecessary. Bootstrap
 preserves existing generated secrets and identity imports; do not regenerate them
-against a retained realm. Privileged users now enroll TOTP at first login. Configure
-`safer-mfa-required` for every future reviewer/approver/admin; missing signed LoA2
-assurance denies privileged sessions. Old privileged sessions must sign in again.
+against a retained realm. All demo roles sign in with the fixed passwords in
+`.local/demo-users.json`. The historical `configure_mfa.py` command now selects a
+password-only browser flow, clears pending TOTP enrollment and synchronizes those
+passwords. Existing enrolled factors are preserved but are not requested.
 Application logout revokes its session; IdP login forces reauthentication.
 
 ## Portable HTTPS readiness profile
@@ -91,7 +92,7 @@ PYTHONPATH=apps/api uv run python scripts/reset_synthetic_test_mfa.py --syntheti
 ```
 
 It removes only that exact labelled OTP factor from four fixed local subjects, preserves
-personal/unknown factors and revokes their local sessions. MFA stays required: next
+personal/unknown factors and revokes their local sessions. The current demo does not require MFA. In older MFA-enabled profiles, next
 human login enrolls an authenticator. Do not automate fixture login after replacing
 the fixture factor with a personal factor. Passwords remain in private `.local/demo-users.json`.
 No password/token/TOTP secret belongs in screenshots, logs, docs or source.
@@ -101,7 +102,7 @@ No password/token/TOTP secret belongs in screenshots, logs, docs or source.
 `infra/keycloak/federation.example.json` is disabled configuration, with a secret
 reference and an explicit unconfigured post-broker MFA/recovery requirement. Select and
 test the external provider through Keycloak configuration; application authorization
-still reads local active membership/grants and signed MFA assurance. No federation
+still reads local active membership/grants; the current demo does not require MFA assurance. No federation
 was activated or externally tested. Swap the small `KeyWrapper` interface for the
 approved KMS/HSM after contract/security review. Future residency includes India-based
 replicas, logs, backups and key services; provider claims remain unverified until selected.

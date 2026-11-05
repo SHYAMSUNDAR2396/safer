@@ -47,7 +47,7 @@ Captured demo email is visible at **http://localhost:58025** (Mailpit; nothing l
 
 Open **http://localhost:5173** (use `localhost`, not `127.0.0.1`, for OIDC). Open `.local/demo-users.json` locally for generated passwords. Never commit or share that file. `alpha` and `beta` belong to separate institutions. `auditor` has read-only access to Alpha. `reviewer` is an AICTE reviewer with review authority over Alpha only; `reviewer2` starts with none. `admin1` and `admin2` are access administrators: release-approval authority needs both. `sync_identity.py` adds users created after your Keycloak was first initialised; it is a no-op otherwise. No public signup exists.
 
-Reviewers, approvers and admins require TOTP enrollment and signed MFA assurance. Old privileged sessions must sign in again. After automated browser tests, remove only labelled synthetic test factors as described in the operating guide so the next human login can enroll its own authenticator.
+All seven demo accounts use password-only sign-in, including reviewers, approvers and admins. Their fixed passwords come from `.local/demo-users.json`; `configure_mfa.py` retains its historical name but now disables the second-factor flow and synchronizes those passwords into Keycloak. Re-running it preserves the saved credentials. Role permissions and institution scoping still apply.
 
 ## Local readiness profile
 

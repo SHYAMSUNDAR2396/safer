@@ -1,6 +1,7 @@
 """Remove only labelled browser-test OTP factors on four fixed local fixture accounts.
 
-Run after browser checks so a person can enroll their own authenticator on next login.
+Optional cleanup for factors left by older MFA-enabled browser checks.
+The current demo uses password-only login and does not require enrollment.
 Personal/unknown factors are preserved. This is not a general MFA reset tool.
 """
 
@@ -83,7 +84,7 @@ def main():
             )
         engine.dispose()
     print(
-        f"Removed browser-owned factors on {len(changed)} local synthetic users; personal factors preserved. MFA remains required at next login."
+        f"Removed browser-owned factors on {len(changed)} local synthetic users; personal factors preserved. Login policy is unchanged."
     )
 
 

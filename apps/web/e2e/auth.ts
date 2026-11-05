@@ -1,6 +1,5 @@
 import { expect, type Page } from "@playwright/test";
 import { readFileSync } from "node:fs";
-import { completeMfa } from "./mfa";
 const users = JSON.parse(
   readFileSync("../../.local/demo-users.json", "utf8"),
 ) as { username: string; password: string }[];
@@ -15,7 +14,6 @@ export async function login(page: Page, name: string) {
   await page.locator("#username").fill(u.username);
   await page.locator("#password").fill(u.password);
   await page.locator("#kc-login").click();
-  await completeMfa(page, name);
   await expect(page.getByRole("button", { name: "Sign out" })).toBeVisible();
   if (name === "reviewer" || name === "reviewer2") await loadReviewPages(page);
 }
