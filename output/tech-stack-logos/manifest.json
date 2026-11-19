@@ -1,0 +1,486 @@
+[
+  {
+    "name": "React",
+    "slug": "react",
+    "url": "https://api.github.com/repos/devicons/devicon/contents/icons/react/react-original.svg",
+    "source": "https://github.com/devicons/devicon/blob/master/icons/react/react-original.svg",
+    "kind": "Devicon collection",
+    "main": true,
+    "file": "01-main-stack/react.svg",
+    "status": "downloaded",
+    "bytes": 2387,
+    "png": "PNG/01-main-stack/react.png",
+    "dimensions": [
+      1200,
+      1200
+    ]
+  },
+  {
+    "name": "TypeScript",
+    "slug": "typescript",
+    "url": "https://api.github.com/repos/devicons/devicon/contents/icons/typescript/typescript-original.svg",
+    "source": "https://github.com/devicons/devicon/blob/master/icons/typescript/typescript-original.svg",
+    "kind": "Devicon collection",
+    "main": true,
+    "file": "01-main-stack/typescript.svg",
+    "status": "downloaded",
+    "bytes": 943,
+    "png": "PNG/01-main-stack/typescript.png",
+    "dimensions": [
+      1200,
+      1200
+    ]
+  },
+  {
+    "name": "Vite",
+    "slug": "vite",
+    "url": "https://api.github.com/repos/devicons/devicon/contents/icons/vite/vite-original.svg",
+    "source": "https://github.com/devicons/devicon/blob/master/icons/vite/vite-original.svg",
+    "kind": "Devicon collection",
+    "main": true,
+    "file": "01-main-stack/vite.svg",
+    "status": "downloaded",
+    "bytes": 171,
+    "png": "PNG/01-main-stack/vite.png",
+    "dimensions": [
+      1200,
+      1200
+    ]
+  },
+  {
+    "name": "Python",
+    "slug": "python",
+    "url": "https://api.github.com/repos/devicons/devicon/contents/icons/python/python-original.svg",
+    "source": "https://github.com/devicons/devicon/blob/master/icons/python/python-original.svg",
+    "kind": "Devicon collection",
+    "main": true,
+    "file": "01-main-stack/python.svg",
+    "status": "downloaded",
+    "bytes": 2300,
+    "png": "PNG/01-main-stack/python.png",
+    "dimensions": [
+      1200,
+      1200
+    ]
+  },
+  {
+    "name": "FastAPI",
+    "slug": "fastapi",
+    "url": "https://api.github.com/repos/devicons/devicon/contents/icons/fastapi/fastapi-original.svg",
+    "source": "https://github.com/devicons/devicon/blob/master/icons/fastapi/fastapi-original.svg",
+    "kind": "Devicon collection",
+    "main": true,
+    "file": "01-main-stack/fastapi.svg",
+    "status": "downloaded",
+    "bytes": 3065,
+    "png": "PNG/01-main-stack/fastapi.png",
+    "dimensions": [
+      1200,
+      1200
+    ]
+  },
+  {
+    "name": "PostgreSQL",
+    "slug": "postgresql",
+    "url": "https://api.github.com/repos/devicons/devicon/contents/icons/postgresql/postgresql-original.svg",
+    "source": "https://github.com/devicons/devicon/blob/master/icons/postgresql/postgresql-original.svg",
+    "kind": "Devicon collection",
+    "main": true,
+    "file": "01-main-stack/postgresql.svg",
+    "status": "downloaded",
+    "bytes": 9178,
+    "png": "PNG/01-main-stack/postgresql.png",
+    "dimensions": [
+      1200,
+      1200
+    ]
+  },
+  {
+    "name": "Docker",
+    "slug": "docker",
+    "url": "https://www.docker.com/static/Docker-Logos-1.zip",
+    "source": "https://www.docker.com/company/newsroom/media-resources/",
+    "kind": "Official project (brand kit)",
+    "main": true,
+    "file": "01-main-stack/docker.svg",
+    "status": "downloaded",
+    "bytes": 1225,
+    "png": "PNG/01-main-stack/docker.png",
+    "dimensions": [
+      1200,
+      946
+    ]
+  },
+  {
+    "name": "GitHub Actions",
+    "slug": "githubactions",
+    "url": "https://api.github.com/repos/devicons/devicon/contents/icons/githubactions/githubactions-original.svg",
+    "source": "https://github.com/devicons/devicon/blob/master/icons/githubactions/githubactions-original.svg",
+    "kind": "Devicon collection",
+    "main": true,
+    "file": "01-main-stack/githubactions.svg",
+    "status": "downloaded",
+    "bytes": 2854,
+    "png": "PNG/01-main-stack/githubactions.png",
+    "dimensions": [
+      1200,
+      1200
+    ]
+  },
+  {
+    "name": "Node.js",
+    "slug": "nodejs",
+    "url": "https://api.github.com/repos/devicons/devicon/contents/icons/nodejs/nodejs-original.svg",
+    "source": "https://github.com/devicons/devicon/blob/master/icons/nodejs/nodejs-original.svg",
+    "kind": "Devicon collection",
+    "main": false,
+    "file": "02-supporting-tools/nodejs.svg",
+    "status": "downloaded",
+    "bytes": 1806,
+    "png": "PNG/02-supporting-tools/nodejs.png",
+    "dimensions": [
+      1200,
+      1200
+    ]
+  },
+  {
+    "name": "npm",
+    "slug": "npm",
+    "url": "https://api.github.com/repos/devicons/devicon/contents/icons/npm/npm-original-wordmark.svg",
+    "source": "https://github.com/devicons/devicon/blob/master/icons/npm/npm-original-wordmark.svg",
+    "kind": "Devicon collection",
+    "main": false,
+    "file": "02-supporting-tools/npm.svg",
+    "status": "downloaded",
+    "bytes": 330,
+    "png": "PNG/02-supporting-tools/npm.png",
+    "dimensions": [
+      1200,
+      1200
+    ]
+  },
+  {
+    "name": "HTML5",
+    "slug": "html5",
+    "url": "https://api.github.com/repos/devicons/devicon/contents/icons/html5/html5-original.svg",
+    "source": "https://github.com/devicons/devicon/blob/master/icons/html5/html5-original.svg",
+    "kind": "Devicon collection",
+    "main": false,
+    "file": "02-supporting-tools/html5.svg",
+    "status": "downloaded",
+    "bytes": 607,
+    "png": "PNG/02-supporting-tools/html5.png",
+    "dimensions": [
+      1200,
+      1200
+    ]
+  },
+  {
+    "name": "CSS3",
+    "slug": "css3",
+    "url": "https://api.github.com/repos/devicons/devicon/contents/icons/css3/css3-original.svg",
+    "source": "https://github.com/devicons/devicon/blob/master/icons/css3/css3-original.svg",
+    "kind": "Devicon collection",
+    "main": false,
+    "file": "02-supporting-tools/css3.svg",
+    "status": "downloaded",
+    "bytes": 778,
+    "png": "PNG/02-supporting-tools/css3.png",
+    "dimensions": [
+      1200,
+      1200
+    ]
+  },
+  {
+    "name": "SQLAlchemy",
+    "slug": "sqlalchemy",
+    "url": "https://api.github.com/repos/devicons/devicon/contents/icons/sqlalchemy/sqlalchemy-original.svg",
+    "source": "https://github.com/devicons/devicon/blob/master/icons/sqlalchemy/sqlalchemy-original.svg",
+    "kind": "Devicon collection",
+    "main": false,
+    "file": "02-supporting-tools/sqlalchemy.svg",
+    "status": "downloaded",
+    "bytes": 2767,
+    "png": "PNG/02-supporting-tools/sqlalchemy.png",
+    "dimensions": [
+      1200,
+      1200
+    ]
+  },
+  {
+    "name": "Pytest",
+    "slug": "pytest",
+    "url": "https://api.github.com/repos/devicons/devicon/contents/icons/pytest/pytest-original.svg",
+    "source": "https://github.com/devicons/devicon/blob/master/icons/pytest/pytest-original.svg",
+    "kind": "Devicon collection",
+    "main": false,
+    "file": "02-supporting-tools/pytest.svg",
+    "status": "downloaded",
+    "bytes": 689,
+    "png": "PNG/02-supporting-tools/pytest.png",
+    "dimensions": [
+      1200,
+      1200
+    ]
+  },
+  {
+    "name": "Playwright",
+    "slug": "playwright",
+    "url": "https://api.github.com/repos/devicons/devicon/contents/icons/playwright/playwright-original.svg",
+    "source": "https://github.com/devicons/devicon/blob/master/icons/playwright/playwright-original.svg",
+    "kind": "Devicon collection",
+    "main": false,
+    "file": "02-supporting-tools/playwright.svg",
+    "status": "downloaded",
+    "bytes": 3760,
+    "png": "PNG/02-supporting-tools/playwright.png",
+    "dimensions": [
+      1200,
+      1200
+    ]
+  },
+  {
+    "name": "Keycloak",
+    "slug": "keycloak",
+    "url": "https://www.keycloak.org/resources/images/logo.svg",
+    "source": "https://www.keycloak.org/",
+    "kind": "Official project",
+    "main": true,
+    "file": "01-main-stack/keycloak.svg",
+    "status": "downloaded",
+    "bytes": 7564,
+    "png": "PNG/01-main-stack/keycloak.png",
+    "dimensions": [
+      1200,
+      248
+    ]
+  },
+  {
+    "name": "ClamAV",
+    "slug": "clamav",
+    "url": "https://www.clamav.net/assets/clamav-trademark.png",
+    "source": "https://www.clamav.net/",
+    "kind": "Official project",
+    "main": true,
+    "file": "01-main-stack/clamav.png",
+    "status": "downloaded",
+    "bytes": 31078,
+    "png": "PNG/01-main-stack/clamav.png",
+    "dimensions": [
+      1200,
+      976
+    ]
+  },
+  {
+    "name": "Python official",
+    "slug": "python-official",
+    "url": "https://www.python.org/static/community_logos/python-logo-only.svg",
+    "source": "https://www.python.org/community/logos/",
+    "kind": "Official project",
+    "main": false,
+    "status": "failed",
+    "error": "HTTP Error 404: Not Found"
+  },
+  {
+    "name": "FastAPI official",
+    "slug": "fastapi-official",
+    "url": "https://fastapi.tiangolo.com/img/logo-margin/logo-teal.svg",
+    "source": "https://fastapi.tiangolo.com/",
+    "kind": "Official project",
+    "main": false,
+    "file": "02-supporting-tools/fastapi-official.svg",
+    "status": "downloaded",
+    "bytes": 6548,
+    "png": "PNG/02-supporting-tools/fastapi-official.png",
+    "dimensions": [
+      1200,
+      433
+    ]
+  },
+  {
+    "name": "PostgreSQL official",
+    "slug": "postgresql-official",
+    "url": "https://www.postgresql.org/media/img/about/press/elephant.svg",
+    "source": "https://www.postgresql.org/about/press/",
+    "kind": "Official project",
+    "main": false,
+    "status": "failed",
+    "error": "HTTP Error 404: Not Found"
+  },
+  {
+    "name": "SeaweedFS",
+    "slug": "seaweedfs",
+    "url": "https://github.com/seaweedfs/seaweedfs/blob/master/note/seaweedfs.png",
+    "source": "https://github.com/seaweedfs/seaweedfs",
+    "kind": "Official project repository",
+    "main": true,
+    "status": "downloaded",
+    "file": "01-main-stack/seaweedfs.png",
+    "bytes": 78638,
+    "png": "PNG/01-main-stack/seaweedfs.png",
+    "dimensions": [
+      1200,
+      1200
+    ]
+  },
+  {
+    "name": "Lucide",
+    "slug": "lucide",
+    "url": "https://lucide.dev/logo.light.svg",
+    "source": "https://lucide.dev/",
+    "kind": "Official project",
+    "main": false,
+    "status": "downloaded",
+    "file": "02-supporting-tools/lucide.svg",
+    "bytes": 590,
+    "png": "PNG/02-supporting-tools/lucide.png",
+    "dimensions": [
+      1200,
+      1200
+    ]
+  },
+  {
+    "name": "Ruff",
+    "slug": "ruff",
+    "url": "https://docs.astral.sh/ruff/assets/bolt.svg",
+    "source": "https://docs.astral.sh/ruff/",
+    "kind": "Official project",
+    "main": false,
+    "status": "downloaded",
+    "file": "02-supporting-tools/ruff.svg",
+    "bytes": 3746,
+    "png": "PNG/02-supporting-tools/ruff.png",
+    "dimensions": [
+      982,
+      1200
+    ]
+  },
+  {
+    "name": "uv",
+    "slug": "uv",
+    "url": "https://docs.astral.sh/uv/assets/logo-letter.svg",
+    "source": "https://docs.astral.sh/uv/",
+    "kind": "Official project",
+    "main": false,
+    "status": "downloaded",
+    "file": "02-supporting-tools/uv.svg",
+    "bytes": 532,
+    "png": "PNG/02-supporting-tools/uv.png",
+    "dimensions": [
+      1200,
+      1200
+    ]
+  },
+  {
+    "name": "Authlib",
+    "slug": "authlib",
+    "url": "https://docs.authlib.org/en/latest/_static/light-logo.svg",
+    "source": "https://docs.authlib.org/en/latest/",
+    "kind": "Official project",
+    "main": false,
+    "status": "downloaded",
+    "file": "02-supporting-tools/authlib.svg",
+    "bytes": 5668,
+    "png": "PNG/02-supporting-tools/authlib.png",
+    "dimensions": [
+      1200,
+      288
+    ]
+  },
+  {
+    "name": "Pillow",
+    "slug": "pillow",
+    "url": "https://pillow.readthedocs.io/en/stable/_static/pillow-logo-dark-text.png",
+    "source": "https://pillow.readthedocs.io/en/stable/",
+    "kind": "Official project",
+    "main": false,
+    "status": "downloaded",
+    "file": "02-supporting-tools/pillow.png",
+    "bytes": 15221,
+    "png": "PNG/02-supporting-tools/pillow.png",
+    "dimensions": [
+      1200,
+      426
+    ]
+  },
+  {
+    "name": "pypdf",
+    "slug": "pypdf",
+    "url": "https://pypdf.readthedocs.io/en/stable/_static/logo.png",
+    "source": "https://pypdf.readthedocs.io/en/stable/",
+    "kind": "Official project",
+    "main": false,
+    "status": "downloaded",
+    "file": "02-supporting-tools/pypdf.png",
+    "bytes": 9611,
+    "png": "PNG/02-supporting-tools/pypdf.png",
+    "dimensions": [
+      1200,
+      325
+    ]
+  },
+  {
+    "name": "Psycopg",
+    "slug": "psycopg",
+    "url": "https://www.psycopg.org/img/logo.png",
+    "source": "https://www.psycopg.org/",
+    "kind": "Official project",
+    "main": false,
+    "status": "downloaded",
+    "file": "02-supporting-tools/psycopg.png",
+    "bytes": 146010,
+    "png": "PNG/02-supporting-tools/psycopg.png",
+    "dimensions": [
+      1200,
+      1200
+    ]
+  },
+  {
+    "name": "Prettier",
+    "slug": "prettier",
+    "url": "https://prettier.io/icon.png",
+    "source": "https://prettier.io/",
+    "kind": "Official project",
+    "main": false,
+    "status": "downloaded",
+    "file": "02-supporting-tools/prettier.png",
+    "bytes": 1419,
+    "png": "PNG/02-supporting-tools/prettier.png",
+    "dimensions": [
+      1200,
+      1200
+    ]
+  },
+  {
+    "name": "Uvicorn",
+    "slug": "uvicorn",
+    "url": "https://api.github.com/repos/Kludex/uvicorn/contents/docs/uvicorn.png",
+    "source": "https://github.com/Kludex/uvicorn",
+    "kind": "Official project",
+    "main": false,
+    "status": "downloaded",
+    "file": "02-supporting-tools/uvicorn.png",
+    "bytes": 437946,
+    "png": "PNG/02-supporting-tools/uvicorn.png",
+    "dimensions": [
+      1200,
+      1200
+    ]
+  },
+  {
+    "name": "Pydantic",
+    "slug": "pydantic",
+    "source": "https://docs.pydantic.dev/latest/",
+    "url": "https://docs.pydantic.dev/latest/",
+    "kind": "Official project (inline SVG)",
+    "main": false,
+    "file": "02-supporting-tools/pydantic.svg",
+    "status": "downloaded",
+    "bytes": 4206,
+    "png": "PNG/02-supporting-tools/pydantic.png",
+    "dimensions": [
+      1200,
+      238
+    ]
+  }
+]

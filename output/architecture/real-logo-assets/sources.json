@@ -1,0 +1,49 @@
+[
+  {
+    "name": "nginx.svg",
+    "bytes": 10689,
+    "url": "https://nginx.org/img/nginx_logo.svg"
+  },
+  {
+    "name": "openbao.svg",
+    "bytes": 21413,
+    "url": "https://raw.githubusercontent.com/openbao/artwork/main/color/openbao-text-color.svg"
+  },
+  {
+    "name": "valkey.svg",
+    "bytes": 6515,
+    "url": "https://valkey.io/img/valkey-horizontal.svg"
+  },
+  {
+    "name": "celery.png",
+    "bytes": 5624,
+    "url": "https://docs.celeryq.dev/en/stable/_static/celery_512.png"
+  },
+  {
+    "name": "git.svg",
+    "bytes": 858,
+    "url": "https://git-scm.com/images/logos/downloads/Git-Icon-1788C.svg"
+  },
+  {
+    "name": "github.png",
+    "bytes": 7249,
+    "url": "https://github.githubassets.com/images/modules/logos_page/GitHub-Mark.png"
+  },
+  {
+    "name": "oci-toolkit.zip",
+    "bytes": 6997183,
+    "url": "https://docs.oracle.com/en-us/iaas/Content/Resources/Assets/OCI-Style-Guide-for-Drawio.zip"
+  },
+  {
+    "name": "gemini.svg",
+    "url": "https://www.gstatic.com/lamda/images/gemini_sparkle_aurora_33f86dc0c0257da337c63.svg"
+  },
+  {
+    "name": "mailpit.svg",
+    "url": "https://raw.githubusercontent.com/axllent/mailpit/develop/server/ui/favicon.svg"
+  },
+  {
+    "name": "oci-compute.svg",
+    "url": "https://docs.oracle.com/en-us/iaas/Content/General/Reference/graphicsfordiagrams.htm"
+  }
+]

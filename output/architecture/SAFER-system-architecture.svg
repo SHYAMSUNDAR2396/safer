@@ -1,0 +1,79 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1920" height="1080" viewBox="0 0 1920 1080"><rect width="100%" height="100%" fill="#ffffff"/><defs><marker id="arrow" markerWidth="10" markerHeight="10" refX="8" refY="4" orient="auto-start-reverse"><path d="M0,0 L8,4 L0,8" fill="none" stroke="#17365d" stroke-width="1.6"/></marker><marker id="planned" markerWidth="10" markerHeight="10" refX="8" refY="4" orient="auto-start-reverse"><path d="M0,0 L8,4 L0,8" fill="none" stroke="#b86b18" stroke-width="1.6"/></marker></defs>
+<text x="60" y="76.0" font-family="Comic Sans MS, Chalkboard, sans-serif" font-size="48" text-anchor="start" fill="#17365d">SAFER  /  High-level System Architecture</text>
+<text x="62" y="122.0" font-family="Comic Sans MS, Chalkboard, sans-serif" font-size="27" text-anchor="start" fill="#667788">Secure Administration of FDRs through Electronic Review</text>
+<path d="M70,191 Q210.0,188 350,191 Q361,190 360,202 L359,368 Q360,381 348,380 L72,381 Q59,380 60,368 L61,202 Q60,190 70,191 Z" fill="#f3f7fc" stroke="#17365d" stroke-width="2.4"/>
+<path d="M67,194 L352,193 M357,198 L356,372" fill="none" stroke="#17365d" stroke-width="0.7" opacity=".45"/>
+<text x="210.0" y="236.0" font-family="Comic Sans MS, Chalkboard, sans-serif" font-size="29" text-anchor="middle" fill="#17365d">USERS</text>
+<text x="210.0" y="281.0" font-family="Comic Sans MS, Chalkboard, sans-serif" font-size="26" text-anchor="middle" fill="#243746">Institutions</text>
+<text x="210.0" y="314.28" font-family="Comic Sans MS, Chalkboard, sans-serif" font-size="26" text-anchor="middle" fill="#243746">AICTE reviewers</text>
+<text x="210.0" y="347.56" font-family="Comic Sans MS, Chalkboard, sans-serif" font-size="26" text-anchor="middle" fill="#243746">Authorized approvers</text>
+<path d="M480,191 Q645.0,188 810,191 Q821,190 820,202 L819,338 Q820,351 808,350 L482,351 Q469,350 470,338 L471,202 Q470,190 480,191 Z" fill="#f3f7fc" stroke="#17365d" stroke-width="2.4"/>
+<path d="M477,194 L812,193 M817,198 L816,342" fill="none" stroke="#17365d" stroke-width="0.7" opacity=".45"/>
+<text x="645.0" y="236.0" font-family="Comic Sans MS, Chalkboard, sans-serif" font-size="29" text-anchor="middle" fill="#17365d">WEB PORTAL</text>
+<text x="645.0" y="280.0" font-family="Comic Sans MS, Chalkboard, sans-serif" font-size="25" text-anchor="middle" fill="#243746">React + TypeScript</text>
+<text x="645.0" y="312.0" font-family="Comic Sans MS, Chalkboard, sans-serif" font-size="25" text-anchor="middle" fill="#243746">FDR forms + status views</text>
+<path d="M960,191 Q1125.0,188 1290,191 Q1301,190 1300,202 L1299,338 Q1300,351 1288,350 L962,351 Q949,350 950,338 L951,202 Q950,190 960,191 Z" fill="#effaf4" stroke="#087f5b" stroke-width="2.4"/>
+<path d="M957,194 L1292,193 M1297,198 L1296,342" fill="none" stroke="#087f5b" stroke-width="0.7" opacity=".45"/>
+<text x="1125.0" y="236.0" font-family="Comic Sans MS, Chalkboard, sans-serif" font-size="29" text-anchor="middle" fill="#087f5b">IDENTITY &amp; ACCESS</text>
+<text x="1125.0" y="280.0" font-family="Comic Sans MS, Chalkboard, sans-serif" font-size="25" text-anchor="middle" fill="#243746">Keycloak OIDC</text>
+<text x="1125.0" y="312.0" font-family="Comic Sans MS, Chalkboard, sans-serif" font-size="25" text-anchor="middle" fill="#243746">Login + user roles</text>
+<path d="M480,476 Q885.0,473 1290,476 Q1301,475 1300,487 L1299,713 Q1300,726 1288,725 L482,726 Q469,725 470,713 L471,487 Q470,475 480,476 Z" fill="#f3f7fc" stroke="#17365d" stroke-width="2.4"/>
+<path d="M477,479 L1292,478 M1297,483 L1296,717" fill="none" stroke="#17365d" stroke-width="0.7" opacity=".45"/>
+<text x="885.0" y="525.0" font-family="Comic Sans MS, Chalkboard, sans-serif" font-size="33" text-anchor="middle" fill="#17365d">APPLICATION BACKEND</text>
+<text x="885.0" y="567.0" font-family="Comic Sans MS, Chalkboard, sans-serif" font-size="27" text-anchor="middle" fill="#243746">FastAPI modular monolith</text>
+<text x="885.0" y="601.56" font-family="Comic Sans MS, Chalkboard, sans-serif" font-size="27" text-anchor="middle" fill="#243746">Current: FDR register, document intake + audit</text>
+<text x="885.0" y="636.12" font-family="Comic Sans MS, Chalkboard, sans-serif" font-size="27" text-anchor="middle" fill="#243746">Planned: scrutiny, renewal + release workflows</text>
+<text x="885.0" y="670.6800000000001" font-family="Comic Sans MS, Chalkboard, sans-serif" font-size="27" text-anchor="middle" fill="#243746">Institution scope + authorization on every request</text>
+<path d="M480,861 Q650.0,858 820,861 Q831,860 830,872 L829,988 Q830,1001 818,1000 L482,1001 Q469,1000 470,988 L471,872 Q470,860 480,861 Z" fill="#effaf4" stroke="#087f5b" stroke-width="2.4"/>
+<path d="M477,864 L822,863 M827,868 L826,992" fill="none" stroke="#087f5b" stroke-width="0.7" opacity=".45"/>
+<text x="650.0" y="906.0" font-family="Comic Sans MS, Chalkboard, sans-serif" font-size="29" text-anchor="middle" fill="#087f5b">PostgreSQL</text>
+<text x="650.0" y="950.0" font-family="Comic Sans MS, Chalkboard, sans-serif" font-size="25" text-anchor="middle" fill="#243746">Records + audit history</text>
+<path d="M950,861 Q1120.0,858 1290,861 Q1301,860 1300,872 L1299,988 Q1300,1001 1288,1000 L952,1001 Q939,1000 940,988 L941,872 Q940,860 950,861 Z" fill="#effaf4" stroke="#087f5b" stroke-width="2.4"/>
+<path d="M947,864 L1292,863 M1297,868 L1296,992" fill="none" stroke="#087f5b" stroke-width="0.7" opacity=".45"/>
+<text x="1120.0" y="906.0" font-family="Comic Sans MS, Chalkboard, sans-serif" font-size="29" text-anchor="middle" fill="#087f5b">PRIVATE S3 STORAGE</text>
+<text x="1120.0" y="949.0" font-family="Comic Sans MS, Chalkboard, sans-serif" font-size="24" text-anchor="middle" fill="#243746">Versioned FDR documents</text>
+<text x="1120.0" y="979.72" font-family="Comic Sans MS, Chalkboard, sans-serif" font-size="24" text-anchor="middle" fill="#243746">Uploads enter quarantine</text>
+<path d="M1505,186 Q1677.5,183 1850,186 Q1861,185 1860,197 L1859,343 Q1860,356 1848,355 L1507,356 Q1494,355 1495,343 L1496,197 Q1495,185 1505,186 Z" fill="#fff8ed" stroke="#b86b18" stroke-width="2.4" stroke-dasharray="12 9"/>
+<text x="1677.5" y="229.0" font-family="Comic Sans MS, Chalkboard, sans-serif" font-size="27" text-anchor="middle" fill="#b86b18">BANK VERIFICATION</text>
+<text x="1677.5" y="273.0" font-family="Comic Sans MS, Chalkboard, sans-serif" font-size="23" text-anchor="middle" fill="#243746">Authorized sources only</text>
+<text x="1677.5" y="302.44" font-family="Comic Sans MS, Chalkboard, sans-serif" font-size="23" text-anchor="middle" fill="#243746">Confirmed evidence is distinct</text>
+<text x="1677.5" y="331.88" font-family="Comic Sans MS, Chalkboard, sans-serif" font-size="23" text-anchor="middle" fill="#243746">from institution claims</text>
+<path d="M1505,486 Q1677.5,483 1850,486 Q1861,485 1860,497 L1859,643 Q1860,656 1848,655 L1507,656 Q1494,655 1495,643 L1496,497 Q1495,485 1505,486 Z" fill="#fff8ed" stroke="#b86b18" stroke-width="2.4" stroke-dasharray="12 9"/>
+<text x="1677.5" y="529.0" font-family="Comic Sans MS, Chalkboard, sans-serif" font-size="27" text-anchor="middle" fill="#b86b18">BACKGROUND WORKERS</text>
+<text x="1677.5" y="574.0" font-family="Comic Sans MS, Chalkboard, sans-serif" font-size="24" text-anchor="middle" fill="#243746">Isolated file scanning</text>
+<text x="1677.5" y="604.72" font-family="Comic Sans MS, Chalkboard, sans-serif" font-size="24" text-anchor="middle" fill="#243746">Maturity reminders + retries</text>
+<path d="M1505,821 Q1677.5,818 1850,821 Q1861,820 1860,832 L1859,978 Q1860,991 1848,990 L1507,991 Q1494,990 1495,978 L1496,832 Q1495,820 1505,821 Z" fill="#fff8ed" stroke="#b86b18" stroke-width="2.4" stroke-dasharray="12 9"/>
+<text x="1677.5" y="866.0" font-family="Comic Sans MS, Chalkboard, sans-serif" font-size="29" text-anchor="middle" fill="#b86b18">AI ASSISTANCE</text>
+<text x="1677.5" y="909.0" font-family="Comic Sans MS, Chalkboard, sans-serif" font-size="24" text-anchor="middle" fill="#243746">OCR + discrepancy flags</text>
+<text x="1677.5" y="939.72" font-family="Comic Sans MS, Chalkboard, sans-serif" font-size="24" text-anchor="middle" fill="#243746">Safe inputs + source evidence</text>
+<text x="1677.5" y="970.44" font-family="Comic Sans MS, Chalkboard, sans-serif" font-size="24" text-anchor="middle" fill="#243746">Human review required</text>
+<path d="M360,270 L470,270" fill="none" stroke="#17365d" stroke-width="2.5"  marker-end="url(#arrow)"/>
+<text x="377" y="247.0" font-family="Comic Sans MS, Chalkboard, sans-serif" font-size="21" text-anchor="start" fill="#667788">HTTPS</text>
+<path d="M820,270 L950,270" fill="none" stroke="#17365d" stroke-width="2.5"  marker-end="url(#arrow)"/>
+<text x="825" y="246.0" font-family="Comic Sans MS, Chalkboard, sans-serif" font-size="21" text-anchor="start" fill="#667788">OIDC login</text>
+<path d="M645,350 L645,475" fill="none" stroke="#17365d" stroke-width="2.5"  marker-end="url(#arrow)"/>
+<text x="670" y="416.0" font-family="Comic Sans MS, Chalkboard, sans-serif" font-size="21" text-anchor="start" fill="#667788">Authenticated requests</text>
+<path d="M1125,350 L1125,475" fill="none" stroke="#17365d" stroke-width="2.5"  marker-end="url(#arrow)"/>
+<text x="1145" y="416.0" font-family="Comic Sans MS, Chalkboard, sans-serif" font-size="21" text-anchor="start" fill="#667788">Validate identity</text>
+<path d="M650,725 L650,860" fill="none" stroke="#17365d" stroke-width="2.5"  marker-end="url(#arrow)"/>
+<text x="482" y="793.0" font-family="Comic Sans MS, Chalkboard, sans-serif" font-size="21" text-anchor="start" fill="#667788">Transactions</text>
+<path d="M1120,725 L1120,860" fill="none" stroke="#17365d" stroke-width="2.5"  marker-end="url(#arrow)"/>
+<text x="1140" y="793.0" font-family="Comic Sans MS, Chalkboard, sans-serif" font-size="21" text-anchor="start" fill="#667788">Private objects</text>
+<path d="M1300,545 L1400,545 L1400,270 L1495,270" fill="none" stroke="#b86b18" stroke-width="2.5" stroke-dasharray="11 8" marker-end="url(#planned)"/>
+<text x="1325" y="396.0" font-family="Comic Sans MS, Chalkboard, sans-serif" font-size="21" text-anchor="start" fill="#b86b18">Evidence adapter</text>
+<path d="M1300,625 L1495,625" fill="none" stroke="#b86b18" stroke-width="2.5" stroke-dasharray="11 8" marker-end="url(#planned)"/>
+<text x="1350" y="603.0" font-family="Comic Sans MS, Chalkboard, sans-serif" font-size="21" text-anchor="start" fill="#b86b18">Jobs</text>
+<path d="M1675,655 L1675,820" fill="none" stroke="#b86b18" stroke-width="2.5" stroke-dasharray="11 8" marker-end="url(#planned)"/>
+<text x="1397" y="756.0" font-family="Comic Sans MS, Chalkboard, sans-serif" font-size="21" text-anchor="start" fill="#b86b18">After document safety checks</text>
+<text x="60" y="514.0" font-family="Comic Sans MS, Chalkboard, sans-serif" font-size="24" text-anchor="start" fill="#17365d">ACCESS BOUNDARY</text>
+<text x="60" y="566.0" font-family="Comic Sans MS, Chalkboard, sans-serif" font-size="26" text-anchor="start" fill="#243746">Role + institution checks</text>
+<text x="60" y="599.28" font-family="Comic Sans MS, Chalkboard, sans-serif" font-size="26" text-anchor="start" fill="#243746">protect every record.</text>
+<text x="60" y="632.56" font-family="Comic Sans MS, Chalkboard, sans-serif" font-size="26" text-anchor="start" fill="#243746"></text>
+<text x="60" y="665.84" font-family="Comic Sans MS, Chalkboard, sans-serif" font-size="26" text-anchor="start" fill="#243746">AI supports scrutiny.</text>
+<text x="60" y="699.12" font-family="Comic Sans MS, Chalkboard, sans-serif" font-size="26" text-anchor="start" fill="#243746">Officials authorize release.</text>
+<path d="M65,905 L155,905" stroke="#17365d" stroke-width="3"/>
+<text x="175" y="905.0" font-family="Comic Sans MS, Chalkboard, sans-serif" font-size="23" text-anchor="start" fill="#667788">Current component</text>
+<path d="M65,955 L155,955" stroke="#b86b18" stroke-width="3" stroke-dasharray="11 8"/>
+<text x="175" y="955.0" font-family="Comic Sans MS, Chalkboard, sans-serif" font-size="23" text-anchor="start" fill="#667788">Planned capability</text>
+<text x="60" y="1052.0" font-family="Comic Sans MS, Chalkboard, sans-serif" font-size="22" text-anchor="start" fill="#667788">SIH 2026  /  PS 26265  /  Team Invictus</text>
+</svg>

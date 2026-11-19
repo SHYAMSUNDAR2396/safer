@@ -1,0 +1,27 @@
+sequenceDiagram
+  actor R as Reviewer
+  participant A as FastAPI
+  participant P as PostgreSQL
+  participant G as Provider adapter
+  participant M as Gemini (off by default)
+  R->>A: GET source package
+  A->>P: Check session/grants and read case
+  A-->>R: Server facts, citations and source digest
+  R->>A: POST purpose, digest and CSRF
+  A->>A: Check consent, exact synthetic approval and private key
+  alt Gates pass and capacity available
+    A->>P: Acquire shared admission slot; commit cost reservation
+    A->>G: Minimized bounded source blocks
+    G->>M: Fixed HTTPS request without tools
+    M-->>G: Untrusted response
+    G->>G: Validate schema, completeness and block identities
+    G-->>A: Advisory wording or safe failure
+    A->>P: Recheck current session, grants and case sources
+    alt Access valid and source unchanged
+      A-->>R: AI draft beside server facts, or local fallback
+    else Access revoked or sources changed
+      A-->>R: Discard wording; access/stale error
+    end
+  else Disabled, unapproved, busy or allowance exhausted
+    A-->>R: Deterministic local fallback; no model request
+  end

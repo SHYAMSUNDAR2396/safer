@@ -1,0 +1,49 @@
+[
+  {
+    "name": "nginx.svg",
+    "bytes": 10689,
+    "url": "https://nginx.org/img/nginx_logo.svg"
+  },
+  {
+    "name": "openbao.svg",
+    "bytes": 21413,
+    "url": "https://raw.githubusercontent.com/openbao/artwork/main/color/openbao-text-color.svg"
+  },
+  {
+    "name": "valkey.svg",
+    "bytes": 6515,
+    "url": "https://valkey.io/img/valkey-horizontal.svg"
+  },
+  {
+    "name": "celery.png",
+    "bytes": 5624,
+    "url": "https://docs.celeryq.dev/en/stable/_static/celery_512.png"
+  },
+  {
+    "name": "git.svg",
+    "bytes": 858,
+    "url": "https://git-scm.com/images/logos/downloads/Git-Icon-1788C.svg"
+  },
+  {
+    "name": "github.png",
+    "bytes": 7249,
+    "url": "https://github.githubassets.com/images/modules/logos_page/GitHub-Mark.png"
+  },
+  {
+    "name": "gemini.svg",
+    "error": "HTTP Error 404: Not Found"
+  },
+  {
+    "name": "oci-toolkit.zip",
+    "bytes": 6997183,
+    "url": "https://docs.oracle.com/en-us/iaas/Content/Resources/Assets/OCI-Style-Guide-for-Drawio.zip"
+  },
+  {
+    "name": "mailpit-tree.json",
+    "paths": [
+      "server/ui-src/components/AppFavicon.vue",
+      "server/ui/favicon.ico",
+      "server/ui/favicon.svg"
+    ]
+  }
+]

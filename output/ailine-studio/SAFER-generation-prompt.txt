@@ -1,0 +1,35 @@
+Create ONE editable cloud architecture diagram for SAFER (Secure Administration of FDRs through Electronic Review), AICTE Security Deposit / FDR Management Portal.
+
+TITLE: SAFER inside Oracle Cloud — Proposed Production Architecture.
+PURPOSE: SIH 2026 Technical Approach slide. A proposed paid production design, not deployed infrastructure and not the 2 OCPU / 12 GB free pilot.
+
+STYLE: Landscape, white background. Match our presentation: navy #1B3A7A and blue #004AAD headings/arrows; pastel blue #DCEEF8, green #DDE8D5, pink #F8CECF and pale yellow #FFF6D8 group fills. Use readable short labels, genuine OCI/product icons where available, rounded group outlines, orthogonal connectors and generous spacing. Times New Roman text if supported. Native editable nodes and arrows. No generic AWS substitutes, invented logos or decorative illustrations.
+
+OUTER HIERARCHY:
+OCI tenancy → Primary region Mumbai (ap-mumbai-1) → VCN → public load-balancer subnet and private app/worker/data endpoint groups. Mumbai has one availability domain: show TWO FAULT DOMAINS, not two availability domains.
+Place managed regional Object Storage, Vault/KMS/Secrets and observability outside the subnet boxes but within the primary region. Show Hyderabad (ap-hyderabad-1) as a separate RECOVERY region.
+
+PUBLIC FLOW:
+Institutions / AICTE users resolve app/auth hostnames with OCI DNS (lookup only; not an HTTP proxy). HTTPS reaches OCI Flexible Load Balancer with attached regional WAF policy and TLS certificates. The LB routes app traffic to Nginx and authentication traffic to Keycloak backend sets. Health checks route to available private hosts. Private VMs have no public IPs. Do not draw WAF as a standalone VM.
+
+PRIVATE COMPUTE:
+Compute A in Fault Domain 1 and Compute B in Fault Domain 2. Each runs Docker containers: Nginx + built React/TypeScript frontend, FastAPI/Pydantic/SQLAlchemy modular monolith, and a clustered Keycloak production node. OIDC code + PKCE and privileged TOTP MFA. Keep health/admin/cluster ports private. This is ONE modular application, not business microservices.
+Workflow labels: FDR submission → evidence scrutiny → maturity/renewal monitoring → authorized release → reports/audit. Human approval controls release.
+
+STATE / BACKGROUND FLOW:
+Managed OCI Database with PostgreSQL, at least TWO nodes; separate app and Keycloak databases/users. PostgreSQL owns records, audit and durable job/outbox state.
+Private OCI Object Storage stores encrypted, versioned FDR documents with SHA-256 and exact source locators. Keep document-version buckets separate from retention-protected audit exports; do not claim active retention rules and versioning on one bucket.
+Committed PostgreSQL outbox → one leased/fenced relay → OCI Cache non-sharded Redis-compatible cluster (at least THREE nodes, TLS, job IDs only) → Celery workers on TWO private worker VMs across fault domains.
+Workers perform scanning, extraction, reminders and exports. ClamAV and parsers are isolated; scanner gets file bytes, not DB/storage/KMS credentials. Scan failure retains quarantine. Workers send approved notifications through OCI Email Delivery. Mailpit is test-only.
+
+SECURITY / OPERATIONS:
+OCI Vault/KMS wraps per-object data keys; OCI Secrets and scoped instance principals supply credentials. These need tested cloud adapters. Service Gateway for supported OCI service routes; NAT with controlled egress for updates and authorized integrations; Bastion for time-limited admin access. Show IAM, Monitoring, Logging, Audit and Notifications as regional dependencies.
+Delivery: GitHub Actions tests/scans/signs → OCIR pinned images → reviewed rolling deployment to Compute.
+
+RECOVERY:
+Hyderabad recovery copies cover DB, exact document/version manifests, identity/config and key recovery. Separate administration. Labels: RPO ≤1 hour / RTO ≤4 hours — TARGETS REQUIRING FULL RECOVERY TESTS. No active-active or achieved availability claim.
+
+EXTERNAL / OPTIONAL:
+Bank evidence is recorded separately from institution claims; real bank API authorization pending. Gemini is optional external AI, OFF by default, advisory only, local deterministic fallback. Only approved synthetic facts; no real financial records. AI failure cannot block core case processing or approve a release.
+
+LEGEND: Solid lines = proposed request/data dependencies. Dashed lines = optional integration/recovery. Footnote: Proposed paid target; current demonstration is local and synthetic-only. Do not add Kubernetes, Oracle Autonomous Database, Kafka or other services absent from this brief.

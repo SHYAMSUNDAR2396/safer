@@ -1,0 +1,42 @@
+{
+  "date": "2026-10-26",
+  "issues": 0,
+  "checks": [
+    {
+      "file": "SAFER-v2-ai-sequence.excalidraw",
+      "elements": 71,
+      "assets": 5,
+      "textOverflow": []
+    },
+    {
+      "file": "SAFER-v2-all-views.excalidraw",
+      "elements": 484,
+      "assets": 28,
+      "textOverflow": []
+    },
+    {
+      "file": "SAFER-v2-oci-proposed-deployment.excalidraw",
+      "elements": 107,
+      "assets": 12,
+      "textOverflow": []
+    },
+    {
+      "file": "SAFER-v2-overview.excalidraw",
+      "elements": 136,
+      "assets": 13,
+      "textOverflow": []
+    },
+    {
+      "file": "SAFER-v2-security-data-flow.excalidraw",
+      "elements": 99,
+      "assets": 10,
+      "textOverflow": []
+    },
+    {
+      "file": "SAFER-v2-slide-fit.excalidraw",
+      "elements": 66,
+      "assets": 8,
+      "textOverflow": []
+    }
+  ]
+}

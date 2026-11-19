@@ -1,0 +1,18 @@
+Generation mode: built-in image_gen
+
+Use case: infographic-diagram.
+Create one presentation-ready comparison infographic for the SAFER security deposit/FDR management portal, landscape 16:9, high resolution, pure white background. It will be placed in the top-right comparison area of a Smart India Hackathon presentation. Clean professional flat illustrations with crisp vector-like edges, generous padding, large readable sans-serif typography. Navy title, red before column, blue proposed column. No government logos or watermarks.
+
+Exact top title: "Before SAFER vs Proposed SAFER".
+Two equal columns with exact headers: "BEFORE SAFER" on the left and "PROPOSED SAFER" on the right. Thin light-grey separators organize four aligned horizontal comparison rows. Each row uses a large recognizable illustration beside a very short label, with a small navy right-pointing arrow between columns. Avoid a text-heavy table, tiny lettering, paragraph text, clutter or exaggerated cartoon characters.
+
+Row 1 left: illustration of disconnected paper files and spreadsheets, exact label "Fragmented records".
+Row 1 right: illustration of one secure digital repository containing organized FDR files, exact label "Centralized FDR repository".
+Row 2 left: illustration of a human checking paperwork with correspondence envelopes, exact label "Manual correspondence".
+Row 2 right: illustration of a document and magnifying glass with visible evidence links, exact label "Evidence-linked scrutiny".
+Row 3 left: illustration of a calendar with handwritten notes and a warning clock, exact label "Manual renewal tracking".
+Row 3 right: illustration of a calendar with a notification bell and checkmark, exact label "Automated reminders".
+Row 4 left: illustration of scattered request letters with a waiting clock, exact label "Scattered release follow-ups".
+Row 4 right: illustration of sequential approval steps ending with an authorized checkmark, exact label "Authorized release workflow".
+
+Use coral-red linework and subtle pale red accents for before illustrations. Use blue linework and subtle pale blue accents for proposed illustrations. Labels dark navy for readability. No numbers, bar charts, percentages, fake statistics, guaranteed time savings, instant bank verification or autonomous payment claims. One small readable footer: "Proposed capabilities; benefits require pilot measurement." Ensure all text is spelled correctly and no objects or labels overlap. Image should be ready to insert directly into PowerPoint.
